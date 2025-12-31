@@ -47,7 +47,7 @@ const transactionSchema = z
     isTaxDeductible: z.boolean().default(false),
   })
   .refine(
-    (data) => (data.type !== 'income' && data.type !== 'expense') || !!data.accountId,
+    (data) => (data.type !== 'income' && data.type !== 'expense' && data.type !== 'investment') || !!data.accountId,
     { message: 'Please select an account.', path: ['accountId'] }
   )
   .refine((data) => data.type !== 'investment' || !!data.investmentId, {
@@ -58,7 +58,7 @@ const transactionSchema = z
     (data) => data.type !== 'transfer' || (!!data.fromAccountId && !!data.toAccountId),
     {
       message: 'Please select both from and to accounts.',
-      path: ['fromAccountId'], // Point error to the first of the two fields
+      path: ['fromAccountId'],
     }
   )
   .refine((data) => data.type !== 'transfer' || data.fromAccountId !== data.toAccountId, {
@@ -137,15 +137,22 @@ export function EditTransactionDialog({
       } else if (transaction.type === 'expense' && transaction.accountId) {
         const oldAccountRef = doc(firestore, 'users', user.uid, 'accounts', transaction.accountId);
         batch.update(oldAccountRef, { balance: increment(oldAmount) });
-      } else if (transaction.type === 'investment' && transaction.investmentId) {
-        const oldInvestmentRef = doc(firestore, 'users', user.uid, 'investments', transaction.investmentId);
-        batch.update(oldInvestmentRef, { currentValue: increment(-oldAmount) });
+      } else if (transaction.type === 'investment' && transaction.investmentId && transaction.accountId) {
+         const oldAccountRef = doc(firestore, 'users', user.uid, 'accounts', transaction.accountId);
+         const oldInvestmentRef = doc(firestore, 'users', user.uid, 'investments', transaction.investmentId);
+         batch.update(oldAccountRef, { balance: increment(oldAmount) });
+         batch.update(oldInvestmentRef, { currentValue: increment(-oldAmount) });
       } else if (transaction.type === 'transfer' && transaction.fromAccountId && transaction.toAccountId) {
         const oldFromRef = doc(firestore, 'users', user.uid, 'accounts', transaction.fromAccountId);
         const oldToRef = doc(firestore, 'users', user.uid, 'accounts', transaction.toAccountId);
         batch.update(oldFromRef, { balance: increment(oldAmount) });
         batch.update(oldToRef, { balance: increment(-oldAmount) });
       }
+      if (transaction.goalId) {
+          const oldGoalRef = doc(firestore, 'users', user.uid, 'goals', transaction.goalId);
+          batch.update(oldGoalRef, { currentAmount: increment(-oldAmount) });
+      }
+
 
       // --- 2. Prepare the new transaction data ---
       const newAmount = data.amount;
@@ -166,6 +173,8 @@ export function EditTransactionDialog({
         fromAccountId: data.fromAccountId || null,
         toAccountId: data.toAccountId || null,
         isTaxDeductible: data.isTaxDeductible,
+        // Preserve goalId if it's a savings contribution
+        goalId: transaction.goalId && data.category === 'Savings' ? transaction.goalId : null,
       };
 
       batch.set(transactionRef, newTransactionData);
@@ -177,8 +186,10 @@ export function EditTransactionDialog({
       } else if (data.type === 'expense' && data.accountId) {
         const newAccountRef = doc(firestore, 'users', user.uid, 'accounts', data.accountId);
         batch.update(newAccountRef, { balance: increment(-newAmount) });
-      } else if (data.type === 'investment' && data.investmentId) {
+      } else if (data.type === 'investment' && data.investmentId && data.accountId) {
+        const newAccountRef = doc(firestore, 'users', user.uid, 'accounts', data.accountId);
         const newInvestmentRef = doc(firestore, 'users', user.uid, 'investments', data.investmentId);
+        batch.update(newAccountRef, { balance: increment(-newAmount) });
         batch.update(newInvestmentRef, { currentValue: increment(newAmount) });
       } else if (data.type === 'transfer' && data.fromAccountId && data.toAccountId) {
         const newFromRef = doc(firestore, 'users', user.uid, 'accounts', data.fromAccountId);
@@ -186,6 +197,11 @@ export function EditTransactionDialog({
         batch.update(newFromRef, { balance: increment(-newAmount) });
         batch.update(newToRef, { balance: increment(newAmount) });
       }
+      if (newTransactionData.goalId) {
+          const newGoalRef = doc(firestore, 'users', user.uid, 'goals', newTransactionData.goalId);
+          batch.update(newGoalRef, { currentAmount: increment(newAmount) });
+      }
+
 
       await batch.commit();
       setIsOpen(false);
@@ -260,7 +276,7 @@ export function EditTransactionDialog({
             </div>
           </div>
 
-          {(transactionType === 'income' || transactionType === 'expense') && (
+          {(transactionType === 'income' || transactionType === 'expense' || transactionType === 'investment') && (
             <>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="accountId" className="text-right">Account</Label>
@@ -280,6 +296,10 @@ export function EditTransactionDialog({
                   {errors.accountId && <p className="text-destructive text-sm mt-1">{errors.accountId.message}</p>}
                 </div>
               </div>
+            </>
+          )}
+
+          {(transactionType === 'income' || transactionType === 'expense') && (
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="category" className="text-right">Category</Label>
                 <div className="col-span-3">
@@ -287,7 +307,6 @@ export function EditTransactionDialog({
                   {errors.category && <p className="text-destructive text-sm mt-1">{errors.category.message}</p>}
                 </div>
               </div>
-            </>
           )}
 
           {transactionType === 'transfer' && (
@@ -384,7 +403,3 @@ export function EditTransactionDialog({
     </Dialog>
   );
 }
-
-    
-
-    

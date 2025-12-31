@@ -1,12 +1,93 @@
 
 'use server';
 
+import { z } from 'zod';
+import { getFirebaseApp } from '@/firebase/server-app';
+import { parseISO, getMonth, getYear } from 'date-fns';
 import {
-  awardAchievement,
+  awardAchievement as awardAchievementFlow,
   type AwardAchievementInput,
 } from '@/ai/flows/award-achievement-flow';
-import { z } from 'zod';
+import type { UserAchievement, Achievement, GetMonthlyAchievementsOutput } from './page';
 
+// --- Input Schema for getMonthlyAchievements ---
+const GetMonthlyAchievementsInputSchema = z.object({
+  userId: z.string().describe('The ID of the user.'),
+});
+type GetMonthlyAchievementsInput = z.infer<
+  typeof GetMonthlyAchievementsInputSchema
+>;
+
+/**
+ * A server-side function that fetches and processes achievement data for a specific user.
+ * It fetches all achievements and the user's earned achievements, then calculates
+ * which were unlocked this month and which remain as challenges.
+ */
+export async function getMonthlyAchievements(
+  input: GetMonthlyAchievementsInput
+): Promise<GetMonthlyAchievementsOutput> {
+  const { userId } = input;
+  const { firestore } = getFirebaseApp();
+
+  try {
+    const allAchievementsSnapshot = await firestore
+      .collection('achievements')
+      .get();
+    const allAchievements = allAchievementsSnapshot.docs.map(
+      (doc) => ({ id: doc.id, ...doc.data() } as Achievement)
+    );
+
+    const userAchievementsSnapshot = await firestore
+      .collection(`users/${userId}/achievements`)
+      .get();
+    const userAchievements = userAchievementsSnapshot.docs.map(
+      (doc) => doc.data() as UserAchievement
+    );
+    const userAchievementIds = new Set(userAchievements.map(ua => ua.achievementId));
+
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    const unlockedThisMonth = userAchievements
+      .filter((ua) => {
+        try {
+          const earnedDate = parseISO(ua.dateEarned);
+          return (
+            getYear(earnedDate) === currentYear &&
+            getMonth(earnedDate) === currentMonth
+          );
+        } catch (e) {
+            return false;
+        }
+      })
+      .map((ua) => {
+        const details = allAchievements.find(
+          (ach) => ach.id === ua.achievementId
+        );
+        return details ? { ...details, dateEarned: ua.dateEarned } : null;
+      })
+      .filter((item): item is Achievement & { dateEarned: string } => !!item);
+
+    const challenges = allAchievements.filter(
+      (ach) => !userAchievementIds.has(ach.id)
+    );
+
+    return {
+      unlockedThisMonth,
+      challenges,
+    };
+  } catch (error: any) {
+    console.error('Error processing achievements:', error);
+    return {
+      unlockedThisMonth: [],
+      challenges: [],
+      error: 'Failed to retrieve and process achievement data.',
+    };
+  }
+}
+
+// --- Achievement Awarding Logic ---
 const achievementCheckSchema = z.object({
   userId: z.string(),
   transactionCount: z.number().optional(),
@@ -16,9 +97,6 @@ const achievementCheckSchema = z.object({
   addedToGoal: z.boolean().optional(),
 });
 
-/**
- * Server action to check for and award achievements based on user data.
- */
 export async function checkAndAwardAchievementsAction(
   data: z.infer<typeof achievementCheckSchema>
 ): Promise<{ awarded: string[] }> {
@@ -29,68 +107,42 @@ export async function checkAndAwardAchievementsAction(
     return { awarded: [] };
   }
 
-  const { userId, transactionCount, budgetCount, goalCount, investmentCount, addedToGoal } = validatedFields.data;
+  const {
+    userId,
+    transactionCount,
+    budgetCount,
+    goalCount,
+    investmentCount,
+    addedToGoal,
+  } = validatedFields.data;
   const awardedAchievements: string[] = [];
 
-  try {
-    // --- Check for 'First Transaction' Achievement ---
-    if (transactionCount && transactionCount > 0) {
-      const result = await awardAchievement({
-        userId,
-        achievementId: 'first-transaction',
-      });
+  const award = async (achievementId: string, achievementName: string) => {
+    try {
+      const result = await awardAchievementFlow({ userId, achievementId });
       if (result.awarded) {
-        awardedAchievements.push('First Transaction');
+        awardedAchievements.push(achievementName);
       }
+    } catch (error) {
+      console.error(`Error awarding achievement ${achievementId}:`, error);
     }
-    
-    // --- Check for 'Budget Setter' Achievement ---
-    if (budgetCount && budgetCount > 0) {
-      const result = await awardAchievement({
-        userId,
-        achievementId: 'budget-setter',
-      });
-      if (result.awarded) {
-        awardedAchievements.push('Budget Setter');
-      }
-    }
+  };
 
-    // --- Check for 'Goal Getter' Achievement ---
-    if (goalCount && goalCount > 0) {
-      const result = await awardAchievement({
-        userId,
-        achievementId: 'goal-getter',
-      });
-      if (result.awarded) {
-        awardedAchievements.push('Goal Getter');
-      }
-    }
-
-    // --- Check for 'Investment Starter' Achievement ---
-    if (investmentCount && investmentCount > 0) {
-      const result = await awardAchievement({
-        userId,
-        achievementId: 'investment-starter',
-      });
-      if (result.awarded) {
-        awardedAchievements.push('Investment Starter');
-      }
-    }
-
-    // --- Check for 'Savvy Saver' Achievement ---
-    if (addedToGoal) {
-      const result = await awardAchievement({
-        userId,
-        achievementId: 'savvy-saver',
-      });
-      if (result.awarded) {
-        awardedAchievements.push('Savvy Saver');
-      }
-    }
-
-    return { awarded: awardedAchievements };
-  } catch (error) {
-    console.error('Error checking/awarding achievements:', error);
-    return { awarded: [] };
+  if (transactionCount && transactionCount > 0) {
+    await award('first-transaction', 'First Transaction');
   }
+  if (budgetCount && budgetCount > 0) {
+    await award('budget-setter', 'Budget Setter');
+  }
+  if (goalCount && goalCount > 0) {
+    await award('goal-getter', 'Goal Getter');
+  }
+  if (investmentCount && investmentCount > 0) {
+    await award('investment-starter', 'Investment Starter');
+  }
+  if (addedToGoal) {
+    await award('savvy-saver', 'Savvy Saver');
+  }
+
+  return { awarded: awardedAchievements };
 }

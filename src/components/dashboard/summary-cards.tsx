@@ -1,7 +1,8 @@
+
 'use client';
 
 import { useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingUp, TrendingDown, Wallet, Scale } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { WithId } from '@/firebase/firestore/use-collection';
@@ -74,8 +75,8 @@ export function SummaryCards({ transactions, accounts, isLoading }: SummaryCards
 
   if (isLoading) {
     return (
-      <div className="grid gap-4 md:grid-cols-3">
-        {Array.from({ length: 6 }).map((_, i) => (
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => (
           <Card key={i}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <Skeleton className="h-5 w-24" />
@@ -94,93 +95,53 @@ export function SummaryCards({ transactions, accounts, isLoading }: SummaryCards
   const monthlyNetFlow = monthlyIncome + monthlyExpense; // expense is negative
 
   return (
-    <div className="space-y-6">
-        <div>
-            <h3 className="text-lg font-medium mb-2">Overall Summary</h3>
-            <div className="w-full overflow-x-auto">
-              <div className="flex gap-4 pb-4 md:grid md:grid-cols-3">
-                  <Card className="min-w-[280px] md:min-w-0">
-                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">Total Income</CardTitle>
-                      <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                      </CardHeader>
-                      <CardContent>
-                      <div className="text-2xl font-bold">{formatCurrency(totalIncome)}</div>
-                      <p className="text-xs text-muted-foreground">Across all time</p>
-                      </CardContent>
-                  </Card>
-                  <Card className="min-w-[280px] md:min-w-0">
-                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">Total Expense</CardTitle>
-                      <TrendingDown className="h-4 w-4 text-muted-foreground" />
-                      </CardHeader>
-                      <CardContent>
-                      <div className="text-2xl font-bold text-destructive">
-                          {formatCurrency(Math.abs(totalExpense))}
-                      </div>
-                      <p className="text-xs text-muted-foreground">Across all time</p>
-                      </CardContent>
-                  </Card>
-                  <Card className="min-w-[280px] md:min-w-0">
-                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">Net Account Balance</CardTitle>
-                      <Wallet className="h-4 w-4 text-muted-foreground" />
-                      </CardHeader>
-                      <CardContent>
-                      <div className={`text-2xl font-bold ${netBalance < 0 ? 'text-destructive' : ''}`}>
-                          {formatCurrency(netBalance)}
-                      </div>
-                      <p className="text-xs text-muted-foreground">Sum of all linked accounts</p>
-                      </CardContent>
-                  </Card>
-              </div>
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Monthly Income</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+            <div className="text-2xl font-bold">{formatCurrency(monthlyIncome)}</div>
+            <p className="text-xs text-muted-foreground">For {currentMonthLabel}</p>
+            </CardContent>
+        </Card>
+        <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Monthly Expense</CardTitle>
+            <TrendingDown className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+            <div className="text-2xl font-bold text-destructive">
+                {formatCurrency(Math.abs(monthlyExpense))}
             </div>
-        </div>
-
-        <div>
-            <div className="flex justify-between items-baseline mb-2">
-                <h3 className="text-lg font-medium">This Month's Summary</h3>
-                <span className="text-sm text-muted-foreground">{currentMonthLabel}</span>
+            <p className="text-xs text-muted-foreground">For {currentMonthLabel}</p>
+            </CardContent>
+        </Card>
+        <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Monthly Net Flow</CardTitle>
+            <Scale className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+            <div className={`text-2xl font-bold ${monthlyNetFlow < 0 ? 'text-destructive' : 'text-green-600'}`}>
+                {formatCurrency(monthlyNetFlow)}
             </div>
-            <div className="w-full overflow-x-auto">
-              <div className="flex gap-4 pb-4 md:grid md:grid-cols-3">
-                 <Card className="min-w-[280px] md:min-w-0">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Monthly Income</CardTitle>
-                    <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                    <div className="text-2xl font-bold">{formatCurrency(monthlyIncome)}</div>
-                    <p className="text-xs text-muted-foreground">For the current month</p>
-                    </CardContent>
-                </Card>
-                <Card className="min-w-[280px] md:min-w-0">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Monthly Expense</CardTitle>
-                    <TrendingDown className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                    <div className="text-2xl font-bold text-destructive">
-                        {formatCurrency(Math.abs(monthlyExpense))}
-                    </div>
-                    <p className="text-xs text-muted-foreground">For the current month</p>
-                    </CardContent>
-                </Card>
-                 <Card className="min-w-[280px] md:min-w-0">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Monthly Net Flow</CardTitle>
-                    <Scale className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                    <div className={`text-2xl font-bold ${monthlyNetFlow < 0 ? 'text-destructive' : 'text-green-600'}`}>
-                        {formatCurrency(monthlyNetFlow)}
-                    </div>
-                    <p className="text-xs text-muted-foreground">Income - Expenses this month</p>
-                    </CardContent>
-                </Card>
-              </div>
+            <p className="text-xs text-muted-foreground">Income - Expenses this month</p>
+            </CardContent>
+        </Card>
+        <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Net Balance</CardTitle>
+            <Wallet className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+            <div className={`text-2xl font-bold ${netBalance < 0 ? 'text-destructive' : ''}`}>
+                {formatCurrency(netBalance)}
             </div>
-        </div>
+            <p className="text-xs text-muted-foreground">Across all linked accounts</p>
+            </CardContent>
+        </Card>
     </div>
   );
 }

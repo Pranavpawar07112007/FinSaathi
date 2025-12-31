@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -30,9 +31,10 @@ export default function AnalyticsPage() {
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Filter states
-  const [filterYear, setFilterYear] = useState<string>('all');
-  const [filterMonth, setFilterMonth] = useState<string>('all');
+  // Set initial filter state to the current month and year
+  const now = new Date();
+  const [filterYear, setFilterYear] = useState<string>(now.getFullYear().toString());
+  const [filterMonth, setFilterMonth] = useState<string>(now.getMonth().toString());
 
   const transactionsQuery = useMemoFirebase(() => {
     if (!user) return null;

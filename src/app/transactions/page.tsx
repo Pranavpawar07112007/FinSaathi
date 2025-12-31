@@ -83,9 +83,10 @@ export default function TransactionsPage() {
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  // Filter states
-  const [filterYear, setFilterYear] = useState<string>('all');
-  const [filterMonth, setFilterMonth] = useState<string>('all');
+  const now = new Date();
+  // Filter states, initialized to current month and year
+  const [filterYear, setFilterYear] = useState<string>(now.getFullYear().toString());
+  const [filterMonth, setFilterMonth] = useState<string>(now.getMonth().toString());
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [filterType, setFilterType] = useState<string>('all');
 

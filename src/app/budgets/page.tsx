@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -23,6 +24,7 @@ import { PlusCircle, Pencil, Trash2, PiggyBank, Utensils, Bus, Popcorn, Home, Sh
 import { AddBudgetDialog } from '@/components/budgets/add-budget-dialog';
 import { EditBudgetDialog } from '@/components/budgets/edit-budget-dialog';
 import { DeleteBudgetDialog } from '@/components/budgets/delete-budget-dialog';
+import { getMonth, getYear, parseISO } from 'date-fns';
 
 const ICONS: { [key: string]: React.ElementType } = {
     Groceries: Utensils,
@@ -67,9 +69,24 @@ export default function BudgetsPage() {
 
   const budgets = useMemo(() => {
     if (!userBudgets) return [];
+
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    const currentMonthTransactions = transactions?.filter(t => {
+        try {
+            const transactionDate = parseISO(t.date);
+            return getYear(transactionDate) === currentYear && getMonth(transactionDate) === currentMonth;
+        } catch (e) {
+            console.warn(`Invalid date format for transaction: ${t.id}`);
+            return false;
+        }
+    }) || [];
+
     return userBudgets.map((budget) => {
       const spent =
-        transactions
+        currentMonthTransactions
           ?.filter((t) => t.category === budget.name && t.amount < 0)
           .reduce((acc, t) => acc + Math.abs(t.amount), 0) || 0;
       return { ...budget, spent, remaining: budget.limit - spent };

@@ -46,27 +46,28 @@ export function DeleteTransactionDialog({
     batch.delete(transactionRef);
 
     // Revert balance changes
+    const amount = Math.abs(transaction.amount);
     if (transaction.type === 'expense' && transaction.accountId) {
       const accountRef = doc(firestore, 'users', user.uid, 'accounts', transaction.accountId);
-      batch.update(accountRef, { balance: increment(Math.abs(transaction.amount)) });
+      batch.update(accountRef, { balance: increment(amount) });
     } else if (transaction.type === 'income' && transaction.accountId) {
       const accountRef = doc(firestore, 'users', user.uid, 'accounts', transaction.accountId);
-      batch.update(accountRef, { balance: increment(-Math.abs(transaction.amount)) });
+      batch.update(accountRef, { balance: increment(-amount) });
     } else if (transaction.type === 'transfer' && transaction.fromAccountId && transaction.toAccountId) {
         const fromAccountRef = doc(firestore, 'users', user.uid, 'accounts', transaction.fromAccountId);
         const toAccountRef = doc(firestore, 'users', user.uid, 'accounts', transaction.toAccountId);
-        batch.update(fromAccountRef, { balance: increment(Math.abs(transaction.amount)) });
-        batch.update(toAccountRef, { balance: increment(-Math.abs(transaction.amount)) });
+        batch.update(fromAccountRef, { balance: increment(amount) });
+        batch.update(toAccountRef, { balance: increment(-amount) });
     } else if (transaction.type === 'investment' && transaction.investmentId) {
-       // This assumes the transaction amount was added to the investment value
        const investmentRef = doc(firestore, 'users', user.uid, 'investments', transaction.investmentId);
-       batch.update(investmentRef, { currentValue: increment(-Math.abs(transaction.amount)) });
+       // Revert the value that was added to the investment
+       batch.update(investmentRef, { currentValue: increment(-amount) });
     }
 
-    // New logic: Revert goal contribution if applicable
-    if (transaction.goalId && transaction.category === 'Savings') {
+    // Revert goal contribution if applicable
+    if (transaction.goalId) {
         const goalRef = doc(firestore, 'users', user.uid, 'goals', transaction.goalId);
-        batch.update(goalRef, { currentAmount: increment(-Math.abs(transaction.amount)) });
+        batch.update(goalRef, { currentAmount: increment(-amount) });
     }
 
 

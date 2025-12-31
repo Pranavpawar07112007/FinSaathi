@@ -188,20 +188,24 @@ export function AddTransactionDialog({
       batch.set(transactionRef, transactionData);
 
       // Update balances
+      const amount = Math.abs(data.amount);
       if (data.type === 'expense' && data.accountId) {
         const accountRef = doc(firestore, 'users', user.uid, 'accounts', data.accountId);
-        batch.update(accountRef, { balance: increment(-Math.abs(data.amount)) });
+        batch.update(accountRef, { balance: increment(-amount) });
       } else if (data.type === 'income' && data.accountId) {
         const accountRef = doc(firestore, 'users', user.uid, 'accounts', data.accountId);
-        batch.update(accountRef, { balance: increment(Math.abs(data.amount)) });
+        batch.update(accountRef, { balance: increment(amount) });
       } else if (data.type === 'transfer' && data.fromAccountId && data.toAccountId) {
         const fromAccountRef = doc(firestore, 'users', user.uid, 'accounts', data.fromAccountId);
         const toAccountRef = doc(firestore, 'users', user.uid, 'accounts', data.toAccountId);
-        batch.update(fromAccountRef, { balance: increment(-Math.abs(data.amount)) });
-        batch.update(toAccountRef, { balance: increment(Math.abs(data.amount)) });
-      } else if (data.type === 'investment' && data.investmentId) {
+        batch.update(fromAccountRef, { balance: increment(-amount) });
+        batch.update(toAccountRef, { balance: increment(amount) });
+      } else if (data.type === 'investment' && data.investmentId && data.accountId) {
+        // Decrease account balance, increase investment value
+        const accountRef = doc(firestore, 'users', user.uid, 'accounts', data.accountId);
         const investmentRef = doc(firestore, 'users', user.uid, 'investments', data.investmentId);
-        batch.update(investmentRef, { currentValue: increment(Math.abs(data.amount)) });
+        batch.update(accountRef, { balance: increment(-amount) });
+        batch.update(investmentRef, { currentValue: increment(amount) });
       }
       
       await batch.commit();
@@ -213,7 +217,6 @@ export function AddTransactionDialog({
       const { awarded } = await checkAndAwardAchievementsAction({
         userId: user.uid,
         transactionCount: 1, // We just added one
-        budgetCount: 0, // Not relevant here
       });
 
       if (awarded.length > 0) {
@@ -327,7 +330,7 @@ export function AddTransactionDialog({
             </div>
           </div>
 
-          {(transactionType === 'income' || transactionType === 'expense') && (
+          {(transactionType === 'income' || transactionType === 'expense' || transactionType === 'investment') && (
             <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="accountId" className="text-right">Account</Label>
                 <div className="col-span-3">
@@ -514,5 +517,3 @@ export function AddTransactionDialog({
     </Dialog>
   );
 }
-
-    

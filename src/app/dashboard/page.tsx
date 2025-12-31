@@ -2,7 +2,7 @@
 'use client';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { collection, query, orderBy } from 'firebase/firestore';
 import { FinancialHealthReport } from '@/components/dashboard/financial-health-report';
@@ -15,6 +15,7 @@ import { InvestmentSummary } from '@/components/dashboard/investment-summary';
 import type { Investment } from '@/app/investments/page';
 import type { Account } from '@/app/accounts/page';
 import { UpcomingBills } from '@/components/dashboard/upcoming-bills';
+import { getMonth, getYear, parseISO } from 'date-fns';
 
 export interface Transaction {
   description: string;
@@ -84,6 +85,19 @@ export default function DashboardPage() {
 
   const isLoading = isUserLoading || isLoadingTransactions || isLoadingBudgets || isLoadingGoals || isLoadingInvestments || isLoadingAccounts;
 
+  const currentMonthTransactions = useMemo(() => {
+    if (!transactions) return [];
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    return transactions.filter(t => {
+      const transactionDate = parseISO(t.date);
+      return getYear(transactionDate) === currentYear && getMonth(transactionDate) === currentMonth;
+    });
+  }, [transactions]);
+
+
   if (isLoading || !user) {
     return (
         <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
@@ -105,8 +119,7 @@ export default function DashboardPage() {
     );
   }
 
-  const expenseTransactions = transactions?.filter(t => t.amount < 0) || [];
-
+  const expenseTransactions = currentMonthTransactions.filter(t => t.amount < 0) || [];
 
   return (
     <>
@@ -137,5 +150,3 @@ export default function DashboardPage() {
     </>
   );
 }
-
-    

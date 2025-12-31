@@ -80,10 +80,18 @@ export default function Header() {
   const firestore = useFirestore();
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [currentDate, setCurrentDate] = useState('');
   
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isNotificationsLoading, setIsNotificationsLoading] = useState(false);
 
+
+  useEffect(() => {
+    const date = new Date();
+    const month = date.toLocaleString('default', { month: 'long' });
+    const year = date.getFullYear();
+    setCurrentDate(`${month} ${year}`);
+  }, []);
 
   const handleLogout = () => {
     auth.signOut();
@@ -168,7 +176,7 @@ export default function Header() {
                     id: `budget-${budget.id}-warning`,
                     type: 'budget' as const,
                     title: `Budget Warning: ${budget.name}`,
-                    description: `You've spent ${formatCurrency(spent)} (${usage.toFixed(0)}%) of your ${formatCurrency(budget.limit)} budget.`,
+                    description: `You\'ve spent ${formatCurrency(spent)} (${usage.toFixed(0)}%) of your ${formatCurrency(budget.limit)} budget.`
                 });
             }
         });
@@ -224,6 +232,10 @@ export default function Header() {
           <Sidebar />
         </SheetContent>
       </Sheet>
+      
+      <div className="hidden items-center gap-4 md:flex">
+        <span className="text-sm font-medium text-muted-foreground">{currentDate}</span>
+      </div>
 
       <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
         <div className="ml-auto flex-1 sm:flex-initial">

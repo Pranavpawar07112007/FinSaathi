@@ -93,22 +93,17 @@ Save for what matters most.
 - **AI Goal Creation**: Describe your goal in natural language (e.g., "I want to save for a trip to Europe"), and the AI will automatically create a named goal with an estimated target amount.
 - **Add Funds**: Easily contribute to your goals by transferring funds from your linked accounts. This automatically creates the corresponding transaction.
 
-### 10. Achievements (`/achievements`)
-Make personal finance rewarding.
-- **Gamification**: Earn badges and points for achieving financial milestones, such as creating your first budget, adding your first investment, or staying on track with your goals.
-- **Challenges**: A dedicated page displays all possible achievements, showing which ones you've unlocked and what you need to do to earn the next one.
-
-### 11. Tax Center (`/tax-center`)
+### 10. Tax Center (`/tax-center`)
 Simplify your tax preparation.
 - **Centralized View**: All transactions flagged as "potentially tax-deductible" by the AI are collected here.
 - **Filter and Export**: Filter your deductible expenses by category and time period, and export the list as a CSV file for easy tax filing.
 
-### 12. AI Advice & Chatbot (`/advice`, `/chatbot`)
+### 11. AI Advice & Chatbot (`/advice`, `/chatbot`)
 Your personal financial expert, available 24/7.
 - **Personalized Advice**: Receive tailored financial advice based on your risk tolerance, goals, and complete financial data. The AI learns from your feedback to improve its recommendations over time.
 - **Conversational Chat**: Ask complex questions about your finances in plain language (e.g., "Compare my spending on food this month vs. last month") and get instant, data-driven answers.
 
-### 13. Profile & Settings (`/profile`, `/settings`)
+### 12. Profile & Settings (`/profile`, `/settings`)
 Manage your account and preferences.
 - **Profile Management**: Update your name and profile picture.
 - **Language Selection**: Choose your preferred language for the application interface.

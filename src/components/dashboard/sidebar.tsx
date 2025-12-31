@@ -32,7 +32,6 @@ const menuItems = [
   { href: '/investments', label: 'Investments', icon: Briefcase },
   { href: '/debts', label: 'Debts', icon: Banknote },
   { href: '/goals', label: 'Goals', icon: Target },
-  { href: '/achievements', label: 'Achievements', icon: Trophy },
   { href: '/tax-center', label: 'Tax Center', icon: ShieldCheck },
   { href: '/advice', label: 'AI Advice', icon: Bot },
   { href: '/chatbot', label: 'AI Chatbot', icon: MessageCircle },

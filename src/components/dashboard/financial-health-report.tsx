@@ -63,17 +63,18 @@ export function FinancialHealthReport({
   const accountsQuery = useMemoFirebase(() => !user ? null : query(collection(firestore, `users/${user.uid}/accounts`)), [user, firestore]);
   const investmentsQuery = useMemoFirebase(() => !user ? null : query(collection(firestore, `users/${user.uid}/investments`)), [user, firestore]);
   const debtsQuery = useMemoFirebase(() => !user ? null : query(collection(firestore, `users/${user.uid}/debts`)), [user, firestore]);
-  const achievementsQuery = useMemoFirebase(() => !user ? null : query(collection(firestore, `users/${user.uid}/achievements`)), [user, firestore]);
-  const userProfileRef = useMemoFirebase(() => !user ? null : doc(firestore, `users/${user.uid}/profile`, user.uid), [user, firestore]);
-
 
   const { data: accounts, isLoading: loadingAccounts } = useCollection(accountsQuery);
   const { data: investments, isLoading: loadingInvestments } = useCollection(investmentsQuery);
   const { data: debts, isLoading: loadingDebts } = useCollection(debtsQuery);
-  const { data: userAchievements, isLoading: loadingAchievements } = useCollection(achievementsQuery);
-  const { data: userProfile, isLoading: loadingProfile } = useDoc(userProfileRef);
 
-  const isDataLoading = loadingAccounts || loadingInvestments || loadingAchievements || loadingProfile || loadingDebts;
+  const isDataLoading = loadingAccounts || loadingInvestments || loadingDebts;
+
+  useEffect(() => {
+    if (reportGenerated) {
+      fetchReport();
+    }
+  }, [period, reportGenerated]);
 
 
   const filteredTransactions = useMemo(() => {
@@ -108,18 +109,13 @@ export function FinancialHealthReport({
     setReportGenerated(true);
     let caughtError: any = null;
 
-    if (!accounts || !investments || !userAchievements || !userProfile || !debts) {
+    if (!accounts || !investments || !debts) {
         setError('Could not generate report because some financial data is missing.');
         setIsLoading(false);
         return;
     };
 
     try {
-        const achievementsData = {
-            totalPoints: userProfile.points,
-            earnedAchievements: userAchievements.map(a => a.achievementId),
-        };
-
         const input: FinancialOverviewInput = {
             transactions: JSON.stringify(filteredTransactions.slice(0, 50)),
             accounts: JSON.stringify(accounts),
@@ -127,7 +123,6 @@ export function FinancialHealthReport({
             budgets: JSON.stringify(processedBudgets),
             goals: JSON.stringify(goals),
             debts: JSON.stringify(debts),
-            achievements: JSON.stringify(achievementsData),
         };
 
         const result = await generateFinancialOverview(input);
@@ -145,7 +140,7 @@ export function FinancialHealthReport({
         setIsLoading(false);
       }
     }
-  }, [filteredTransactions, processedBudgets, goals, accounts, investments, userAchievements, userProfile, debts]);
+  }, [filteredTransactions, processedBudgets, goals, accounts, investments, debts]);
 
   const renderInitialState = () => (
      <Card className="w-full">
@@ -232,7 +227,7 @@ export function FinancialHealthReport({
                         <TabsList>
                             <TabsTrigger value="monthly">Monthly</TabsTrigger>
                             <TabsTrigger value="yearly">Yearly</TabsTrigger>
-                            <TabsTrigger value="all">All Time</TabsTrigger>
+                            <T-absTrigger value="all">All Time</T-absTrigger>
                         </TabsList>
                     </Tabs>
                 </div>

@@ -1,0 +1,302 @@
+
+'use client';
+
+import { useActionState, useEffect, useState, useRef, useMemo } from 'react';
+import { getChatbotResponseAction } from './actions';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Bot, User, Send, Loader2, AlertTriangle, Sparkles } from 'lucide-react';
+import {
+  useUser,
+  useFirestore,
+  useCollection,
+  useMemoFirebase,
+  useDoc,
+} from '@/firebase';
+import { useRouter } from 'next/navigation';
+import { Skeleton } from '@/components/ui/skeleton';
+import { collection, query, limit, orderBy, doc } from 'firebase/firestore';
+import type { Transaction, Budget, Goal } from '@/app/page';
+import type { Account } from '@/app/accounts/page';
+import type { Investment } from '@/app/investments/page';
+import type { Debt } from '@/app/debts/page';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { cn } from '@/lib/utils';
+
+const initialState = {
+  response: null,
+  error: null,
+};
+
+interface Message {
+  role: 'user' | 'model';
+  content: string;
+}
+
+export default function ChatbotPage() {
+  const [state, formAction, isSubmitting] = useActionState(
+    getChatbotResponseAction,
+    initialState
+  );
+
+  const { user, isUserLoading } = useUser();
+  const router = useRouter();
+  const firestore = useFirestore();
+  const formRef = useRef<HTMLFormElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      role: 'model',
+      content: "Hello! I'm FinSaathi, your personal financial assistant. How can I help you today?",
+    },
+  ]);
+
+  // --- Data Fetching ---
+  const transactionsQuery = useMemoFirebase(() => {
+    if (!user) return null;
+    return query(
+      collection(firestore, `users/${user.uid}/transactions`),
+      orderBy('date', 'desc'),
+      limit(50)
+    );
+  }, [user, firestore]);
+  const { data: transactions, isLoading: isLoadingTransactions } =
+    useCollection<Transaction>(transactionsQuery);
+
+  const budgetsQuery = useMemoFirebase(() => {
+    if (!user) return null;
+    return query(collection(firestore, 'users', user.uid, 'budgets'));
+  }, [user, firestore]);
+  const { data: budgets, isLoading: isLoadingBudgets } =
+    useCollection<Budget>(budgetsQuery);
+
+  const goalsQuery = useMemoFirebase(() => {
+    if (!user) return null;
+    return query(collection(firestore, 'users', user.uid, 'goals'));
+  }, [user, firestore]);
+  const { data: goals, isLoading: isLoadingGoals } = useCollection<Goal>(
+    goalsQuery
+  );
+
+  const accountsQuery = useMemoFirebase(() => {
+    if (!user) return null;
+    return query(collection(firestore, 'users', user.uid, 'accounts'));
+  }, [user, firestore]);
+  const { data: accounts, isLoading: isLoadingAccounts } =
+    useCollection<Account>(accountsQuery);
+
+  const investmentsQuery = useMemoFirebase(() => {
+    if (!user) return null;
+    return query(collection(firestore, 'users', user.uid, 'investments'));
+  }, [user, firestore]);
+  const { data: investments, isLoading: isLoadingInvestments } =
+    useCollection<Investment>(investmentsQuery);
+
+  const debtsQuery = useMemoFirebase(() => {
+    if (!user) return null;
+    return query(collection(firestore, `users/${user.uid}/debts`));
+  }, [user, firestore]);
+  const { data: debts, isLoading: isLoadingDebts } = useCollection<Debt>(debtsQuery);
+
+  const userProfileRef = useMemoFirebase(() => {
+    if (!user) return null;
+    return doc(firestore, 'users', user.uid, 'profile', user.uid);
+  }, [user, firestore]);
+  const { data: userProfile, isLoading: isProfileLoading } =
+    useDoc(userProfileRef);
+
+  const isDataLoading =
+    isUserLoading ||
+    isLoadingTransactions ||
+    isLoadingBudgets ||
+    isLoadingGoals ||
+    isLoadingAccounts ||
+    isLoadingInvestments ||
+    isLoadingDebts ||
+    isProfileLoading;
+
+  const financialContext = useMemo(() => {
+     if (isDataLoading) return "Data is still loading.";
+     const budgetSummary = budgets?.map(b => {
+        const spent = transactions?.filter(t => t.category === b.name && t.amount < 0)
+                                   .reduce((acc, t) => acc + Math.abs(t.amount), 0) || 0;
+        return { name: b.name, limit: b.limit, spent };
+    });
+     return JSON.stringify({
+        userProfile,
+        accounts,
+        transactions: transactions?.slice(0, 50), // Limit context size
+        budgets: budgetSummary,
+        goals,
+        investments,
+        debts,
+     }, null, 2);
+  }, [isDataLoading, userProfile, accounts, transactions, budgets, goals, investments, debts]);
+  
+  // --- Effects ---
+  useEffect(() => {
+    if (!isUserLoading && !user) {
+      router.push('/login');
+    }
+  }, [user, isUserLoading, router]);
+
+  useEffect(() => {
+    if (state.response) {
+      setMessages((prev) => [
+        ...prev,
+        { role: 'model', content: state.response! },
+      ]);
+    } else if (state.error) {
+      setMessages((prev) => [
+        ...prev,
+        { role: 'model', content: `Sorry, something went wrong: ${state.error}` },
+      ]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.response, state.error]);
+  
+   useEffect(() => {
+    if (scrollAreaRef.current) {
+        const viewport = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+        if (viewport) {
+             viewport.scrollTop = viewport.scrollHeight;
+        }
+    }
+  }, [messages]);
+
+
+  if (isDataLoading) {
+    return (
+      <div className="flex min-h-screen w-full flex-col">
+        <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
+          <Skeleton className="h-[80vh] w-full" />
+        </main>
+      </div>
+    );
+  }
+
+  const history = messages
+      .filter((m) => m.role !== 'model' || !m.content.startsWith('Hello!'))
+      .reduce((acc, msg) => {
+        if (msg.role === 'user') {
+          acc.push({ user: msg.content, model: '' });
+        } else if (acc.length > 0) {
+          acc[acc.length - 1].model = msg.content;
+        }
+        return acc;
+      }, [] as { user: string; model: string }[]);
+
+  return (
+    <div className="flex min-h-screen w-full flex-col">
+      <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
+        <Card className="flex flex-col h-[85vh]">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles className="text-primary" /> Financial Chatbot
+            </CardTitle>
+            <CardDescription>
+              Ask FinSaathi anything about your finances.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex-1 overflow-hidden">
+            <ScrollArea className="h-full" ref={scrollAreaRef}>
+              <div className="space-y-6 pr-4">
+                {messages.map((msg, index) => (
+                  <div
+                    key={index}
+                    className={cn(
+                      'flex items-start gap-3',
+                      msg.role === 'user' && 'justify-end'
+                    )}
+                  >
+                    {msg.role === 'model' && (
+                      <Avatar className="size-8 border">
+                        <AvatarFallback><Bot /></AvatarFallback>
+                      </Avatar>
+                    )}
+                    <div
+                      className={cn(
+                        'max-w-md rounded-lg px-4 py-3 text-sm',
+                        msg.role === 'user'
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted',
+                        msg.content.includes('Sorry, something went wrong') && 'bg-destructive/10 text-destructive'
+                      )}
+                    >
+                      {msg.content.includes('Sorry, something went wrong') ? (
+                        <div className="flex items-start gap-2">
+                           <AlertTriangle className="size-4 mt-0.5"/>
+                           <p>{msg.content}</p>
+                        </div>
+                      ) : (
+                        <p>{msg.content}</p>
+                      )}
+                    </div>
+                     {msg.role === 'user' && (
+                      <Avatar className="size-8 border">
+                         <AvatarImage src={user?.photoURL ?? undefined} />
+                         <AvatarFallback><User /></AvatarFallback>
+                      </Avatar>
+                    )}
+                  </div>
+                ))}
+                {isSubmitting && (
+                    <div className="flex items-start gap-3">
+                        <Avatar className="size-8 border">
+                            <AvatarFallback><Bot /></AvatarFallback>
+                        </Avatar>
+                        <div className="max-w-md rounded-lg px-4 py-3 text-sm bg-muted flex items-center gap-2">
+                            <Loader2 className="size-4 animate-spin"/>
+                            <span>FinSaathi is thinking...</span>
+                        </div>
+                    </div>
+                )}
+              </div>
+            </ScrollArea>
+          </CardContent>
+          <CardFooter className="pt-6 border-t">
+            <form
+              ref={formRef}
+              action={(formData: FormData) => {
+                  const message = formData.get('message') as string;
+                  if (!message.trim()) return;
+                  
+                  setMessages((prev) => [...prev, { role: 'user', content: message }]);
+                  formAction(formData);
+                  
+                  if(inputRef.current) {
+                    inputRef.current.value = '';
+                  }
+              }}
+              className="flex w-full items-center gap-2"
+            >
+              <Input
+                ref={inputRef}
+                name="message"
+                placeholder="Ask about your spending, goals, or investments..."
+                autoComplete="off"
+                disabled={isSubmitting}
+              />
+              <input type="hidden" name="history" value={JSON.stringify(history)} />
+              <input type="hidden" name="financialContext" value={financialContext} />
+              <Button type="submit" size="icon" disabled={isSubmitting}>
+                {isSubmitting ? <Loader2 className="animate-spin" /> : <Send />}
+              </Button>
+            </form>
+          </CardFooter>
+        </Card>
+      </main>
+    </div>
+  );
+}

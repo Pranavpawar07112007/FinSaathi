@@ -1,0 +1,405 @@
+
+{
+  "entities": {
+    "UserProfile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserProfile",
+      "type": "object",
+      "description": "Represents a user's profile within the FinSaathi application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the UserProfile entity."
+        },
+        "firstName": {
+          "type": "string",
+          "description": "The user's first name."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "The user's last name."
+        },
+        "email": {
+          "type": "string",
+          "description": "The user's email address.",
+          "format": "email"
+        },
+        "signupDate": {
+          "type": "string",
+          "description": "The date and time when the user signed up.",
+          "format": "date-time"
+        },
+        "photoURL": {
+          "type": "string",
+          "description": "URL of the user's profile picture.",
+          "format": "uri"
+        },
+        "points": {
+          "type": "number",
+          "description": "The total points a user has earned through gamification.",
+          "default": 0
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "signupDate"
+      ]
+    },
+    "Transaction": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Transaction",
+      "type": "object",
+      "description": "Represents a single financial transaction, including transfers.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the transaction."
+        },
+        "description": {
+          "type": "string",
+          "description": "A description of the transaction."
+        },
+        "amount": {
+          "type": "number",
+          "description": "The monetary value of the transaction. Negative for expenses, positive for income. For transfers, this is the transfer amount."
+        },
+        "date": {
+          "type": "string",
+          "description": "The date of the transaction in YYYY-MM-DD format.",
+          "format": "date"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["income", "expense", "investment", "transfer", "debt"],
+          "description": "The type of the transaction."
+        },
+        "category": {
+          "type": "string",
+          "description": "The category of the transaction (e.g., Groceries, Salary, Utilities). 'Transfer' for transfers."
+        },
+        "userId": {
+          "type": "string",
+          "description": "The ID of the user who owns this transaction."
+        },
+        "investmentId": {
+          "type": "string",
+          "description": "The ID of the investment this transaction contributes to, if applicable."
+        },
+        "goalId": {
+            "type": "string",
+            "description": "The ID of the goal this transaction contributes to, if applicable."
+        },
+        "accountId": {
+          "type": "string",
+          "description": "The ID of the account for an income or expense transaction."
+        },
+        "fromAccountId": {
+          "type": "string",
+          "description": "The source account ID for a transfer."
+        },
+        "toAccountId": {
+          "type": "string",
+          "description": "The destination account ID for a transfer."
+        },
+        "isTaxDeductible": {
+          "type": "boolean",
+          "description": "Whether the transaction is potentially tax-deductible.",
+          "default": false
+        },
+        "source": {
+            "type": "string",
+            "enum": ["manual", "csv", "image", "pdf"],
+            "description": "The method by which the transaction was created."
+        },
+        "bankTransactionId": {
+            "type": "string",
+            "description": "The unique transaction ID provided by the financial institution, if available."
+        }
+      },
+      "required": [
+        "id",
+        "description",
+        "amount",
+        "date",
+        "type",
+        "category",
+        "userId"
+      ]
+    },
+    "Account": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Account",
+      "type": "object",
+      "description": "Represents a user's financial account.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the account."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the account (e.g., Checking, Savings)."
+        },
+        "balance": {
+          "type": "number",
+          "description": "The current balance of the account."
+        },
+        "userId": {
+          "type": "string",
+          "description": "The ID of the user who owns this account."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "balance",
+        "userId"
+      ]
+    },
+    "Budget": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Budget",
+      "type": "object",
+      "description": "Represents a user-defined budget for a specific category.",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the budget." },
+        "name": { "type": "string", "description": "The category name for the budget (e.g., Groceries)." },
+        "limit": { "type": "number", "description": "The spending limit for this budget category." },
+        "userId": { "type": "string", "description": "The ID of the user who owns this budget." }
+      },
+      "required": ["id", "name", "limit", "userId"]
+    },
+    "Goal": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Goal",
+      "type": "object",
+      "description": "Represents a user's savings goal.",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the goal." },
+        "name": { "type": "string", "description": "The name of the savings goal (e.g., Vacation Fund)." },
+        "targetAmount": { "type": "number", "description": "The target amount to save for the goal." },
+        "currentAmount": { "type": "number", "description": "The amount currently saved towards the goal." },
+        "targetDate": { "type": "string", "format": "date", "description": "The target date to achieve the goal." },
+        "userId": { "type": "string", "description": "The ID of the user who owns this goal." }
+      },
+      "required": ["id", "name", "targetAmount", "currentAmount", "userId"]
+    },
+    "Investment": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Investment",
+      "type": "object",
+      "description": "Represents a user's financial investment, including deposits.",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the investment." },
+        "name": { "type": "string", "description": "The name of the investment (e.g., Reliance Industries, Bitcoin, SBI FD)." },
+        "type": {
+          "type": "string",
+          "description": "The type of investment.",
+          "enum": [ "Stock", "Mutual Fund", "Crypto", "Fixed Deposit", "Recurring Deposit", "Bonds", "ETF", "Gold", "Other" ]
+        },
+        "currentValue": { "type": "number", "description": "The total current market value of the investment." },
+        "targetValue": { "type": "number", "description": "An optional user-defined target value for the investment." },
+        "userId": { "type": "string", "description": "The ID of the user who owns this investment." },
+        "quantity": { "type": "number", "description": "The quantity of the asset held (for Stocks, Crypto, etc.)." },
+        "purchasePrice": { "type": "number", "description": "The average price at which the asset was purchased (for Stocks, etc.)." },
+        "principalAmount": { "type": "number", "description": "The initial principal amount for a Fixed Deposit." },
+        "installmentAmount": { "type": "number", "description": "The monthly installment amount for a Recurring Deposit." },
+        "interestRate": { "type": "number", "description": "The annual interest rate for deposits (e.g., 7.5 for 7.5%)." },
+        "maturityDate": { "type": "string", "format": "date", "description": "The maturity date of the deposit." },
+        "startDate": { "type": "string", "format": "date", "description": "The start date of the deposit." }
+      },
+      "required": ["id", "name", "type", "currentValue", "userId"]
+    },
+    "Debt": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "Debt",
+        "type": "object",
+        "description": "Represents a user's financial debt, such as a loan or credit card balance.",
+        "properties": {
+            "id": { "type": "string", "description": "Unique identifier for the debt." },
+            "name": { "type": "string", "description": "The name of the debt (e.g., HDFC Credit Card, Car Loan)." },
+            "type": { 
+                "type": "string", 
+                "enum": ["Credit Card", "Personal Loan", "Auto Loan", "Home Loan", "Student Loan", "Other"],
+                "description": "The type of debt." 
+            },
+            "totalAmount": { "type": "number", "description": "The total amount of the debt or credit limit." },
+            "currentBalance": { "type": "number", "description": "The outstanding balance of the debt." },
+            "interestRate": { "type": "number", "description": "The annual percentage rate (APR) of interest." },
+            "minimumPayment": { "type": "number", "description": "The minimum monthly payment required." },
+            "userId": { "type": "string", "description": "The ID of the user who owns this debt." }
+        },
+        "required": ["id", "name", "type", "currentBalance", "interestRate", "userId"]
+    },
+    "Achievement": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Achievement",
+      "type": "object",
+      "description": "Defines a specific badge or achievement a user can earn.",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the achievement (e.g., 'first-transaction')." },
+        "name": { "type": "string", "description": "The display name of the achievement (e.g., 'First Transaction')." },
+        "description": { "type": "string", "description": "A short description of how to earn the achievement." },
+        "points": { "type": "number", "description": "The number of points awarded for this achievement." },
+        "icon": { "type": "string", "description": "The name of the lucide-react icon to display." }
+      },
+      "required": ["id", "name", "description", "points", "icon"]
+    },
+    "UserAchievement": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserAchievement",
+      "type": "object",
+      "description": "Links a user to an achievement they have earned.",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for this record." },
+        "userId": { "type": "string", "description": "The ID of the user who earned the achievement." },
+        "achievementId": { "type": "string", "description": "The ID of the earned achievement." },
+        "dateEarned": { "type": "string", "format": "date-time", "description": "The date and time the achievement was earned." }
+      },
+      "required": ["id", "userId", "achievementId", "dateEarned"]
+    },
+    "AdviceFeedback": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "AdviceFeedback",
+        "type": "object",
+        "description": "Stores user feedback on AI-generated advice.",
+        "properties": {
+            "id": { "type": "string", "description": "Unique identifier for the feedback record." },
+            "userId": { "type": "string", "description": "The ID of the user who provided the feedback." },
+            "advice": { "type": "string", "description": "The AI-generated advice that was rated." },
+            "rating": { "type": "string", "enum": ["good", "bad"], "description": "The user's rating of the advice." },
+            "timestamp": { "type": "string", "format": "date-time", "description": "When the feedback was submitted." }
+        },
+        "required": ["id", "userId", "advice", "rating", "timestamp"]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous",
+      "google.com"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}/profile/{profileId}",
+        "definition": {
+          "entityName": "UserProfile",
+          "schema": {
+            "$ref": "#/backend/entities/UserProfile"
+          },
+          "description": "Stores user profile data. Access is restricted to the user identified by {userId}. The profileId should match the userId.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            },
+            {
+              "name": "profileId",
+              "description": "The unique identifier of the profile, which should be the same as the userId."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/transactions/{transactionId}",
+        "definition": {
+          "entityName": "Transaction",
+          "schema": {
+            "$ref": "#/backend/entities/Transaction"
+          },
+          "description": "Stores individual financial transactions for a user. Access is restricted to the user identified by {userId}.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            },
+            {
+              "name": "transactionId",
+              "description": "The unique identifier for the transaction."
+            }
+          ]
+        }
+      },
+       {
+        "path": "/users/{userId}/accounts/{accountId}",
+        "definition": {
+          "entityName": "Account",
+          "schema": {
+            "$ref": "#/backend/entities/Account"
+          },
+          "description": "Stores user financial accounts. Access is restricted to the user identified by {userId}.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            },
+            {
+              "name": "accountId",
+              "description": "The unique identifier for the account."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/budgets/{budgetId}",
+        "definition": {
+          "entityName": "Budget",
+          "schema": { "$ref": "#/backend/entities/Budget" },
+          "description": "Stores user-defined spending budgets. Access is restricted to the user identified by {userId}."
+        }
+      },
+      {
+        "path": "/users/{userId}/goals/{goalId}",
+        "definition": {
+          "entityName": "Goal",
+          "schema": { "$ref": "#/backend/entities/Goal" },
+          "description": "Stores user savings goals. Access is restricted to the user identified by {userId}."
+        }
+      },
+      {
+        "path": "/users/{userId}/investments/{investmentId}",
+        "definition": {
+          "entityName": "Investment",
+          "schema": { "$ref": "#/backend/entities/Investment" },
+          "description": "Stores user financial investments. Access is restricted to the user identified by {userId}."
+        }
+      },
+      {
+        "path": "/users/{userId}/debts/{debtId}",
+        "definition": {
+          "entityName": "Debt",
+          "schema": { "$ref": "#/backend/entities/Debt" },
+          "description": "Stores user financial debts. Access is restricted to the user identified by {userId}."
+        }
+      },
+      {
+        "path": "/achievements/{achievementId}",
+        "definition": {
+          "entityName": "Achievement",
+          "schema": { "$ref": "#/backend/entities/Achievement" },
+          "description": "Stores all possible achievements in the app. This is a read-only collection for clients."
+        }
+      },
+      {
+        "path": "/users/{userId}/achievements/{userAchievementId}",
+        "definition": {
+          "entityName": "UserAchievement",
+          "schema": { "$ref": "#/backend/entities/UserAchievement" },
+          "description": "Stores the achievements a specific user has earned. Access is restricted to the owning user."
+        }
+      },
+      {
+        "path": "/users/{userId}/adviceFeedback/{feedbackId}",
+        "definition": {
+          "entityName": "AdviceFeedback",
+          "schema": { "$ref": "#/backend/entities/AdviceFeedback" },
+          "description": "Stores user feedback on AI-generated advice. Access is restricted to the owning user."
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to support user authentication and profile management for the FinSaathi application. It leverages path-based ownership for user profiles, ensuring data privacy and simplified security rules. Since the application only involves user profiles and no collaborative data, membership maps are not needed. Authorization Independence is achieved through the path-based ownership model. The security rules can directly rely on `request.auth.uid` matching the `userId` path segment. QAPs are inherently supported due to the segregation of user data, enabling secure list operations restricted to the authenticated user."
+  }
+}

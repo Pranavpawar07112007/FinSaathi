@@ -1,0 +1,25 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper function to check ownership
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    // Users can read, write, update, and delete documents in their own subcollections.
+    match /users/{userId}/{document=**} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // The global achievements collection is read-only for any authenticated user.
+    // This allows the app to display all possible achievements.
+    match /achievements/{achievementId} {
+      allow get: if request.auth != null;
+      allow list: if request.auth != null;
+      allow write: if false; // Client-side writes are disallowed
+    }
+  }
+}

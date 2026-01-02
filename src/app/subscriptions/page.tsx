@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import {
   useCollection,
   useFirestore,
@@ -27,6 +27,7 @@ import type { Transaction } from '../transactions/page';
 import { AlertTriangle, Bot, Calendar, IndianRupee, Info, Repeat, RefreshCw, Handshake } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { NegotiationScriptDialog } from '@/components/subscriptions/negotiation-script-dialog';
+import { useInView } from 'framer-motion';
 
 const formatCurrency = (amount: number) => {
   return amount.toLocaleString('en-IN', {
@@ -50,6 +51,10 @@ export default function SubscriptionsPage() {
   const [isNegotiationOpen, setIsNegotiationOpen] = useState(false);
   const [selectedSubscription, setSelectedSubscription] = useState<Subscription | null>(null);
 
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, amount: 0.2 });
+  const [hasTriggered, setHasTriggered] = useState(false);
+
 
   const transactionsQuery = useMemoFirebase(() => {
     if (!user) return null;
@@ -71,6 +76,7 @@ export default function SubscriptionsPage() {
     if (!transactions) return;
     
     setIsLoading(true);
+    setHasTriggered(true);
     setError(null);
     try {
       const result = await detectSubscriptions({ transactions });
@@ -87,33 +93,34 @@ export default function SubscriptionsPage() {
 
 
   useEffect(() => {
-    if (!isLoadingTransactions && transactions) {
+    if (isInView && !hasTriggered && !isLoadingTransactions && transactions) {
       if (transactions.length === 0) {
         setIsLoading(false);
         setSubscriptions([]);
+        setHasTriggered(true);
         return;
       }
       fetchSubscriptions();
     }
-  }, [transactions, isLoadingTransactions, fetchSubscriptions]);
+  }, [transactions, isLoadingTransactions, fetchSubscriptions, isInView, hasTriggered]);
 
   const handleNegotiateClick = (sub: Subscription) => {
     setSelectedSubscription(sub);
     setIsNegotiationOpen(true);
   };
 
-  const pageIsLoading = isUserLoading || isLoading;
+  const pageIsLoading = isUserLoading || (isLoading && hasTriggered);
 
   return (
     <div className="flex min-h-screen w-full flex-col">
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
-        <Card>
+        <Card ref={ref}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Bot className="text-primary" /> Subscription Management
             </CardTitle>
             <CardDescription>
-              FinSaathi has automatically detected the following recurring bills and subscriptions from your transaction history.
+              FinSaathi automatically detects recurring bills and subscriptions from your transaction history.
             </CardDescription>
           </CardHeader>
           <CardContent className="w-full overflow-x-auto">
@@ -131,6 +138,12 @@ export default function SubscriptionsPage() {
                   </CardContent>
                 </Card>
               ))
+            ) : !hasTriggered && !isLoadingTransactions ? (
+                <div className="col-span-full text-center text-muted-foreground py-16">
+                    <h3 className="text-lg font-semibold">Ready to find your subscriptions?</h3>
+                    <p>Click the button below to let our AI analyze your transactions.</p>
+                    <Button onClick={fetchSubscriptions} className="mt-4">Analyze Now</Button>
+                </div>
             ) : error ? (
                 <div className="col-span-full">
                     <Card className="border-destructive/50">

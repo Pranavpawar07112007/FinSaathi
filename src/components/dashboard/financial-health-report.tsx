@@ -17,7 +17,7 @@ import {
   type FinancialOverviewOutput,
 } from '@/ai/flows/generate-financial-overview';
 import type { WithId } from '@/firebase/firestore/use-collection';
-import { Lightbulb, Info, TrendingUp, Target, ShieldCheck, AlertTriangle, HelpCircle, RefreshCw, PieChart, Briefcase, Banknote, Loader2 } from 'lucide-react';
+import { Lightbulb, Info, TrendingUp, Target, ShieldCheck, AlertTriangle, HelpCircle, RefreshCw, PieChart, Briefcase, Banknote, Loader2, Sparkles } from 'lucide-react';
 import {
   Popover,
   PopoverContent,
@@ -26,6 +26,7 @@ import {
 import { Button } from '../ui/button';
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from '@/firebase';
 import { collection, query, doc } from 'firebase/firestore';
+import { getMonth, getYear, parseISO } from 'date-fns';
 
 
 interface FinancialHealthReportProps {
@@ -46,8 +47,9 @@ export function FinancialHealthReport({
   goals,
 }: FinancialHealthReportProps) {
   const [report, setReport] = useState<FinancialOverviewOutput | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isGenerated, setIsGenerated] = useState(false);
 
   const { user } = useUser();
   const firestore = useFirestore();
@@ -65,9 +67,26 @@ export function FinancialHealthReport({
 
   const isDataLoading = loadingAccounts || loadingInvestments || loadingDebts || loadingProfile;
 
+  const currentMonthTransactions = useMemo(() => {
+    if (!transactions) return [];
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    return transactions.filter(t => {
+      try {
+        const transactionDate = parseISO(t.date);
+        return getYear(transactionDate) === currentYear && getMonth(transactionDate) === currentMonth;
+      } catch {
+        return false;
+      }
+    });
+  }, [transactions]);
+
+
   const processedBudgets = useMemo(() => {
     return budgets.map(budget => {
-        const spent = transactions
+        const spent = currentMonthTransactions
             .filter(t => t.category === budget.name && t.amount < 0)
             .reduce((acc, t) => acc + Math.abs(t.amount), 0);
         return {
@@ -76,7 +95,7 @@ export function FinancialHealthReport({
             spent,
         }
     })
-  }, [budgets, transactions]);
+  }, [budgets, currentMonthTransactions]);
   
   const achievementsSummary = useMemo(() => {
     return {
@@ -89,21 +108,17 @@ export function FinancialHealthReport({
   const fetchReport = useCallback(async (retries = 1) => {
     setIsLoading(true);
     setError(null);
-    let caughtError: any = null;
+    setIsGenerated(true);
 
-    if (!accounts || !investments || !debts || !userProfile) {
-        // This check is important because the effect depends on this data.
-        // If data is still loading, we should not proceed.
-        if (!isDataLoading) {
-            setError('Could not generate report because some financial data is missing.');
-            setIsLoading(false);
-        }
+    if (isDataLoading || !accounts || !investments || !debts || !userProfile) {
+        setError('Could not generate report because some financial data is still loading.');
+        setIsLoading(false);
         return;
     };
 
     try {
         const input: FinancialOverviewInput = {
-            transactions: JSON.stringify(transactions.slice(0, 50)),
+            transactions: JSON.stringify(currentMonthTransactions),
             accounts: JSON.stringify(accounts),
             investments: JSON.stringify(investments),
             budgets: JSON.stringify(processedBudgets),
@@ -115,27 +130,35 @@ export function FinancialHealthReport({
         const result = await generateFinancialOverview(input);
         setReport(result);
     } catch (err: any) {
-      caughtError = err;
       console.error(err);
-      if (retries > 0 && err.message?.includes('503')) { // Retry on 503 errors from the AI service
-        setTimeout(() => fetchReport(retries - 1), 5000); // wait 5 seconds before retry
-        return;
-      }
-      setError('Failed to generate financial report. The service may be temporarily unavailable.');
+      setError('Failed to generate financial report. The AI service may be temporarily unavailable.');
     } finally {
-      if (!(retries > 0 && caughtError?.message?.includes('503'))) {
         setIsLoading(false);
-      }
     }
-  }, [transactions, processedBudgets, goals, accounts, investments, debts, achievementsSummary, userProfile, isDataLoading]);
-  
-  useEffect(() => {
-    // Only fetch the report if the dependent data is not loading.
-    if (!isDataLoading) {
-      fetchReport();
-    }
-  }, [isDataLoading, fetchReport]);
+  }, [currentMonthTransactions, processedBudgets, goals, accounts, investments, debts, achievementsSummary, userProfile, isDataLoading]);
 
+    if (!isGenerated) {
+       return (
+            <Card className="w-full">
+                 <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-2xl">
+                        <Lightbulb className="text-primary"/>
+                        Financial Health Report
+                    </CardTitle>
+                    <CardDescription>Get a personalized AI analysis of your complete financial activity for the current month.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="flex flex-col items-center justify-center h-40 text-center text-muted-foreground p-4 bg-muted/30 rounded-lg">
+                        <p className="mb-4">Click the button to generate your detailed financial wellness report.</p>
+                        <Button onClick={() => fetchReport()} disabled={isDataLoading}>
+                            {isDataLoading ? <Loader2 className="mr-2 animate-spin"/> : <Sparkles className="mr-2"/>}
+                            {isDataLoading ? 'Loading Financial Data...' : 'Generate AI Report'}
+                        </Button>
+                    </div>
+                </CardContent>
+            </Card>
+       )
+    }
 
   if (isLoading || isDataLoading) {
     return (
@@ -298,5 +321,3 @@ export function FinancialHealthReport({
         </Card>
     );
 }
-
-    

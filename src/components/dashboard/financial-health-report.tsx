@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -10,7 +9,7 @@ import {
   CardFooter,
 } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import {
   generateFinancialOverview,
   type FinancialOverviewInput,
@@ -27,6 +26,7 @@ import { Button } from '../ui/button';
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from '@/firebase';
 import { collection, query, doc } from 'firebase/firestore';
 import { getMonth, getYear, parseISO } from 'date-fns';
+import { useInView } from 'framer-motion';
 
 
 interface FinancialHealthReportProps {
@@ -49,7 +49,11 @@ export function FinancialHealthReport({
   const [report, setReport] = useState<FinancialOverviewOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isGenerated, setIsGenerated] = useState(false);
+  
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, amount: 0.2 });
+  const [hasTriggered, setHasTriggered] = useState(false);
+
 
   const { user } = useUser();
   const firestore = useFirestore();
@@ -105,10 +109,10 @@ export function FinancialHealthReport({
   }, [userProfile]);
 
 
-  const fetchReport = useCallback(async (retries = 1) => {
+  const fetchReport = useCallback(async () => {
     setIsLoading(true);
+    setHasTriggered(true);
     setError(null);
-    setIsGenerated(true);
 
     if (isDataLoading || !accounts || !investments || !debts || !userProfile) {
         setError('Could not generate report because some financial data is still loading.');
@@ -137,9 +141,15 @@ export function FinancialHealthReport({
     }
   }, [currentMonthTransactions, processedBudgets, goals, accounts, investments, debts, achievementsSummary, userProfile, isDataLoading]);
 
-    if (!isGenerated) {
+    useEffect(() => {
+      if (isInView && !hasTriggered) {
+        fetchReport();
+      }
+    }, [isInView, hasTriggered, fetchReport]);
+
+    if (!hasTriggered) {
        return (
-            <Card className="w-full">
+            <Card className="w-full min-h-[300px]" ref={ref}>
                  <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-2xl">
                         <Lightbulb className="text-primary"/>
@@ -148,12 +158,8 @@ export function FinancialHealthReport({
                     <CardDescription>Get a personalized AI analysis of your complete financial activity for the current month.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <div className="flex flex-col items-center justify-center h-40 text-center text-muted-foreground p-4 bg-muted/30 rounded-lg">
-                        <p className="mb-4">Click the button to generate your detailed financial wellness report.</p>
-                        <Button onClick={() => fetchReport()} disabled={isDataLoading}>
-                            {isDataLoading ? <Loader2 className="mr-2 animate-spin"/> : <Sparkles className="mr-2"/>}
-                            {isDataLoading ? 'Loading Financial Data...' : 'Generate AI Report'}
-                        </Button>
+                    <div className="flex flex-col items-center justify-center h-40 text-center text-muted-foreground p-4 rounded-lg">
+                       <Skeleton className="h-10 w-48"/>
                     </div>
                 </CardContent>
             </Card>
@@ -193,7 +199,7 @@ export function FinancialHealthReport({
             <p>{error}</p>
         </CardContent>
         <CardFooter>
-            <Button variant="destructive" onClick={() => fetchReport()}>
+            <Button variant="destructive" onClick={fetchReport}>
                 <RefreshCw className="mr-2" />
                 Retry Analysis
             </Button>
@@ -313,7 +319,7 @@ export function FinancialHealthReport({
                 </div>
             </CardContent>
              <CardFooter>
-                <Button onClick={() => fetchReport()} disabled={isDataLoading}>
+                <Button onClick={fetchReport} disabled={isDataLoading}>
                     {isDataLoading ? <Loader2 className="mr-2 animate-spin"/> : <RefreshCw className="mr-2"/>}
                     {isDataLoading ? "Loading Data..." : "Regenerate Report"}
                 </Button>

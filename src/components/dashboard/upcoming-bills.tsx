@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -14,7 +13,7 @@ import {
   detectSubscriptions,
   type DetectSubscriptionsOutput,
 } from '@/ai/flows/detect-subscriptions-flow';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { AlertTriangle, Bot, Calendar } from 'lucide-react';
 import { differenceInDays, parseISO } from 'date-fns';
 import { useInView } from 'framer-motion';
@@ -36,37 +35,42 @@ export function UpcomingBills({ transactions, isLoading }: UpcomingBillsProps) {
   const [bills, setBills] = useState<DetectSubscriptionsOutput['subscriptions'] | null>(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [hasTriggered, setHasTriggered] = useState(false);
-
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, amount: 0.5 });
+  const [hasTriggered, setHasTriggered] = useState(false);
+
+
+  const fetchBills = useCallback(async () => {
+    if (!transactions || transactions.length === 0) {
+      setBills([]);
+      return;
+    }
+    
+    setIsAiLoading(true);
+    setHasTriggered(true);
+    setError(null);
+    try {
+      const result = await detectSubscriptions({ transactions });
+      const upcoming = result.subscriptions
+        .filter(sub => sub.nextDueDate)
+        .sort((a, b) => new Date(a.nextDueDate!).getTime() - new Date(b.nextDueDate!).getTime());
+      setBills(upcoming);
+    } catch (err) {
+      console.error('Failed to fetch upcoming bills:', err);
+      setError('Could not analyze upcoming bills.');
+    } finally {
+      setIsAiLoading(false);
+    }
+  }, [transactions]);
 
   useEffect(() => {
-    if (isInView && !hasTriggered && !isLoading && transactions.length > 0) {
-      const fetchBills = async () => {
-        setIsAiLoading(true);
-        setHasTriggered(true);
-        setError(null);
-        try {
-          const result = await detectSubscriptions({ transactions });
-          const upcoming = result.subscriptions
-            .filter(sub => sub.nextDueDate)
-            .sort((a, b) => new Date(a.nextDueDate!).getTime() - new Date(b.nextDueDate!).getTime());
-          setBills(upcoming);
-        } catch (err) {
-          console.error('Failed to fetch upcoming bills:', err);
-          setError('Could not analyze upcoming bills.');
-        } finally {
-          setIsAiLoading(false);
-        }
-      };
-
+    if (isInView && !hasTriggered && !isLoading) {
       fetchBills();
     }
-  }, [isInView, hasTriggered, transactions, isLoading]);
+  }, [isInView, hasTriggered, isLoading, fetchBills]);
 
   const renderContent = () => {
-    if (isLoading || (isAiLoading && hasTriggered)) {
+    if (isLoading || isAiLoading) {
       return (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {Array.from({ length: 4 }).map((_, i) => (

@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -25,8 +26,8 @@ import {
 import { Button } from '../ui/button';
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from '@/firebase';
 import { collection, query, doc } from 'firebase/firestore';
-import { getMonth, getYear, parseISO } from 'date-fns';
-import { useInView } from 'framer-motion';
+import { getMonth, getYear, parseISO, subMonths, subYears, startOfMonth, endOfMonth, startOfYear, endOfYear } from 'date-fns';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 
 interface FinancialHealthReportProps {
@@ -34,6 +35,8 @@ interface FinancialHealthReportProps {
   budgets: WithId<any>[];
   goals: WithId<any>[];
 }
+
+type Period = 'monthly' | 'yearly' | 'all';
 
 const getScoreColor = (score: number) => {
     if (score >= 80) return "text-green-500";
@@ -47,18 +50,13 @@ export function FinancialHealthReport({
   goals,
 }: FinancialHealthReportProps) {
   const [report, setReport] = useState<FinancialOverviewOutput | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
-  const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, amount: 0.2 });
-  const [hasTriggered, setHasTriggered] = useState(false);
-
+  const [selectedPeriod, setSelectedPeriod] = useState<Period>('monthly');
 
   const { user } = useUser();
   const firestore = useFirestore();
 
-  // Fetch all necessary data that feeds into the report
   const accountsQuery = useMemoFirebase(() => !user ? null : query(collection(firestore, `users/${user.uid}/accounts`)), [user, firestore]);
   const investmentsQuery = useMemoFirebase(() => !user ? null : query(collection(firestore, `users/${user.uid}/investments`)), [user, firestore]);
   const debtsQuery = useMemoFirebase(() => !user ? null : query(collection(firestore, `users/${user.uid}/debts`)), [user, firestore]);
@@ -71,26 +69,47 @@ export function FinancialHealthReport({
 
   const isDataLoading = loadingAccounts || loadingInvestments || loadingDebts || loadingProfile;
 
-  const currentMonthTransactions = useMemo(() => {
+  const getFilteredTransactions = useCallback(() => {
     if (!transactions) return [];
     const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
 
-    return transactions.filter(t => {
-      try {
-        const transactionDate = parseISO(t.date);
-        return getYear(transactionDate) === currentYear && getMonth(transactionDate) === currentMonth;
-      } catch {
-        return false;
-      }
-    });
-  }, [transactions]);
+    switch (selectedPeriod) {
+        case 'monthly':
+            const currentMonthStart = startOfMonth(now);
+            const currentMonthEnd = endOfMonth(now);
+            return transactions.filter(t => {
+                const transactionDate = parseISO(t.date);
+                return transactionDate >= currentMonthStart && transactionDate <= currentMonthEnd;
+            });
+        case 'yearly':
+            const currentYearStart = startOfYear(now);
+            const currentYearEnd = endOfYear(now);
+            return transactions.filter(t => {
+                const transactionDate = parseISO(t.date);
+                return transactionDate >= currentYearStart && transactionDate <= currentYearEnd;
+            });
+        case 'all':
+        default:
+            return transactions;
+    }
+  }, [transactions, selectedPeriod]);
 
 
-  const processedBudgets = useMemo(() => {
-    return budgets.map(budget => {
-        const spent = currentMonthTransactions
+  const fetchReport = useCallback(async () => {
+    setIsGenerating(true);
+    setError(null);
+    setReport(null);
+
+    if (isDataLoading || !accounts || !investments || !debts || !userProfile) {
+        setError('Could not generate report because some financial data is still loading.');
+        setIsGenerating(false);
+        return;
+    };
+
+    const filteredTransactions = getFilteredTransactions();
+    
+    const processedBudgets = budgets.map(budget => {
+        const spent = filteredTransactions
             .filter(t => t.category === budget.name && t.amount < 0)
             .reduce((acc, t) => acc + Math.abs(t.amount), 0);
         return {
@@ -98,31 +117,16 @@ export function FinancialHealthReport({
             limit: budget.limit,
             spent,
         }
-    })
-  }, [budgets, currentMonthTransactions]);
-  
-  const achievementsSummary = useMemo(() => {
-    return {
+    });
+
+    const achievementsSummary = {
         points: userProfile?.points || 0,
         count: userProfile?.achievements?.length || 0,
-    }
-  }, [userProfile]);
-
-
-  const fetchReport = useCallback(async () => {
-    setIsLoading(true);
-    setHasTriggered(true);
-    setError(null);
-
-    if (isDataLoading || !accounts || !investments || !debts || !userProfile) {
-        setError('Could not generate report because some financial data is still loading.');
-        setIsLoading(false);
-        return;
     };
 
     try {
         const input: FinancialOverviewInput = {
-            transactions: JSON.stringify(currentMonthTransactions),
+            transactions: JSON.stringify(filteredTransactions),
             accounts: JSON.stringify(accounts),
             investments: JSON.stringify(investments),
             budgets: JSON.stringify(processedBudgets),
@@ -137,193 +141,156 @@ export function FinancialHealthReport({
       console.error(err);
       setError('Failed to generate financial report. The AI service may be temporarily unavailable.');
     } finally {
-        setIsLoading(false);
+        setIsGenerating(false);
     }
-  }, [currentMonthTransactions, processedBudgets, goals, accounts, investments, debts, achievementsSummary, userProfile, isDataLoading]);
+  }, [isDataLoading, accounts, investments, debts, userProfile, getFilteredTransactions, budgets, goals]);
 
-    useEffect(() => {
-      if (isInView && !hasTriggered) {
-        fetchReport();
-      }
-    }, [isInView, hasTriggered, fetchReport]);
+  const renderInitialState = () => (
+    <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-4 rounded-lg">
+        <Sparkles className="size-12 mb-4 text-primary" />
+        <h3 className="text-lg font-semibold">Generate Your Financial Health Report</h3>
+        <p>Select a time period and let FinSaathi analyze your financial data to provide personalized insights and a wellness score.</p>
+    </div>
+  );
 
-    if (!hasTriggered) {
-       return (
-            <Card className="w-full min-h-[300px]" ref={ref}>
-                 <CardHeader>
+  const renderGeneratingState = () => (
+     <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-4 rounded-lg">
+        <Loader2 className="size-12 animate-spin mb-4" />
+        <p>FinSaathi is analyzing your data for the selected period...</p>
+    </div>
+  );
+
+  const renderErrorState = () => (
+     <div className="flex flex-col items-center justify-center h-full text-center text-destructive bg-destructive/10 p-4 rounded-lg">
+        <AlertTriangle className="size-12 mb-4" />
+        <h3 className="font-semibold">Analysis Failed</h3>
+        <p className="text-sm mb-4">{error}</p>
+        <Button variant="destructive" onClick={fetchReport}>
+            <RefreshCw className="mr-2" />
+            Try Again
+        </Button>
+    </div>
+  );
+
+  const renderReport = () => {
+    if (!report) return null;
+    const WellnessIcon = report.wellnessScore >= 80 ? ShieldCheck : report.wellnessScore >= 50 ? TrendingUp : AlertTriangle;
+    return (
+        <div className="grid gap-8">
+            <div className="grid md:grid-cols-3 gap-6">
+                <div className="md:col-span-2 space-y-2">
+                    <h3 className="font-semibold text-lg">Summary</h3>
+                    <p className="text-muted-foreground">{report.headlineSummary}</p>
+                </div>
+                <Card className="flex flex-col items-center justify-center p-4 bg-muted/50">
+                    <div className="flex items-center gap-2 mb-2">
+                        <p className="text-sm font-medium text-muted-foreground">Financial Wellness Score</p>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <button aria-label="Report details">
+                                <HelpCircle className="size-4 text-muted-foreground cursor-pointer" />
+                                </button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-80" side="top" align="start">
+                                <div className="space-y-4">
+                                    <h4 className="font-semibold">How is this calculated?</h4>
+                                    <p className="text-sm text-muted-foreground">
+                                        The AI starts with a base score of 50 and adjusts it based on a weighted assessment of these key factors:
+                                    </p>
+                                    <ul className="space-y-2 text-xs text-muted-foreground">
+                                        <li className="font-semibold">Cash Flow (30% weight): Your income vs. expenses.</li>
+                                        <li className="font-semibold">Savings & Goals (25% weight): Your progress towards savings goals.</li>
+                                        <li className="font-semibold text-destructive">Debt-to-Income (-35% weight): Your total debt load relative to income. High-interest debt has the largest negative impact.</li>
+                                        <li className="font-semibold">Budget Adherence (10% weight): How well you stick to your spending limits.</li>
+                                    </ul>
+                                </div>
+                            </PopoverContent>
+                        </Popover>
+                    </div>
+                    <div className="flex items-baseline gap-2">
+                        <span className={`text-5xl font-bold ${getScoreColor(report.wellnessScore)}`}>{report.wellnessScore}</span>
+                        <span className="text-xl text-muted-foreground">/ 100</span>
+                    </div>
+                    <WellnessIcon className={`size-6 mt-2 ${getScoreColor(report.wellnessScore)}`} />
+                </Card>
+            </div>
+
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="space-y-2">
+                    <h3 className="font-semibold text-lg flex items-center gap-2"><PieChart className="size-5 text-primary"/>Budget Analysis</h3>
+                    <p className="text-sm text-muted-foreground">{report.budgetAnalysis}</p>
+                </div>
+                <div className="space-y-2">
+                    <h3 className="font-semibold text-lg flex items-center gap-2"><Target className="size-5 text-primary"/>Goal Analysis</h3>
+                    <p className="text-sm text-muted-foreground">{report.goalAnalysis}</p>
+                </div>
+                <div className="space-y-2">
+                    <h3 className="font-semibold text-lg flex items-center gap-2"><Briefcase className="size-5 text-primary"/>Investment Analysis</h3>
+                    <p className="text-sm text-muted-foreground">{report.investmentAnalysis}</p>
+                </div>
+                <div className="space-y-2">
+                    <h3 className="font-semibold text-lg flex items-center gap-2"><Banknote className="size-5 text-primary"/>Debt Analysis</h3>
+                    <p className="text-sm text-muted-foreground">{report.debtAnalysis}</p>
+                </div>
+            </div>
+
+            <div className="space-y-4">
+                <h3 className="font-semibold text-lg">Key Insights</h3>
+                <div className="grid md:grid-cols-3 gap-4">
+                    {report.keyInsights.map((insight, index) => (
+                        <div key={index} className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg">
+                            <Info className="size-5 mt-1 text-primary"/>
+                            <p className="text-sm text-muted-foreground">{insight}</p>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            <div className="space-y-4">
+                <h3 className="font-semibold text-lg">Actionable Advice</h3>
+                <div className="grid md:grid-cols-3 gap-4">
+                    {report.actionableAdvice.map((advice, index) => (
+                        <div key={index} className="flex items-start gap-3 p-3 bg-primary/10 rounded-lg border border-primary/20">
+                            <Target className="size-5 mt-1 text-primary"/>
+                            <p className="text-sm">{advice}</p>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    )
+  }
+
+  return (
+    <Card className="w-full">
+        <CardHeader>
+            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                <div>
                     <CardTitle className="flex items-center gap-2 text-2xl">
                         <Lightbulb className="text-primary"/>
                         Financial Health Report
                     </CardTitle>
-                    <CardDescription>Get a personalized AI analysis of your complete financial activity for the current month.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="flex flex-col items-center justify-center h-40 text-center text-muted-foreground p-4 rounded-lg">
-                       <Skeleton className="h-10 w-48"/>
-                    </div>
-                </CardContent>
-            </Card>
-       )
-    }
-
-  if (isLoading || isDataLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-2xl">
-            <Lightbulb className="text-primary"/>
-            Financial Health Report
-          </CardTitle>
-          <CardDescription>A personalized analysis of your complete financial activity.</CardDescription>
+                    <CardDescription>Get a personalized AI analysis of your financial activity.</CardDescription>
+                </div>
+                 <Tabs value={selectedPeriod} onValueChange={(value) => setSelectedPeriod(value as Period)} className="w-full md:w-auto">
+                    <TabsList className="grid w-full grid-cols-3">
+                        <TabsTrigger value="monthly">Monthly</TabsTrigger>
+                        <TabsTrigger value="yearly">Yearly</TabsTrigger>
+                        <TabsTrigger value="all">All Time</TabsTrigger>
+                    </TabsList>
+                </Tabs>
+            </div>
         </CardHeader>
-        <CardContent className="flex items-center justify-center h-64">
-          <div className="flex flex-col items-center gap-4 text-muted-foreground">
-            <Loader2 className="size-8 animate-spin" />
-            <p>FinSaathi is analyzing your data...</p>
-          </div>
+        <CardContent className="min-h-[300px] flex items-center justify-center">
+           {isGenerating ? renderGeneratingState() : error ? renderErrorState() : report ? renderReport() : renderInitialState()}
         </CardContent>
-      </Card>
-    );
-  }
-
-  if (error) {
-    return (
-    <Card className="border-destructive/50">
-        <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-destructive">
-                <AlertTriangle />
-                Report Error
-            </CardTitle>
-        </CardHeader>
-        <CardContent>
-            <p>{error}</p>
-        </CardContent>
-        <CardFooter>
-            <Button variant="destructive" onClick={fetchReport}>
-                <RefreshCw className="mr-2" />
-                Retry Analysis
+         <CardFooter>
+            <Button onClick={fetchReport} disabled={isDataLoading || isGenerating}>
+                {isGenerating ? <Loader2 className="mr-2 animate-spin"/> : <Sparkles className="mr-2"/>}
+                {isGenerating ? "Analyzing..." : (report ? "Regenerate Report" : "Generate Report")}
             </Button>
+            {isDataLoading && <p className="ml-4 text-sm text-muted-foreground">Loading financial data...</p>}
         </CardFooter>
     </Card>
-    );
-  }
-
-  if (!report) {
-    return (
-      <Card>
-        <CardHeader>
-            <CardTitle>Financial Health Report</CardTitle>
-        </CardHeader>
-        <CardContent className="text-center text-muted-foreground">
-            Could not generate a report. There might not be enough data.
-        </CardContent>
-      </Card>
-    );
-  }
-
-  const WellnessIcon = report.wellnessScore >= 80 ? ShieldCheck : report.wellnessScore >= 50 ? TrendingUp : AlertTriangle;
-
-    return (
-        <Card className="w-full">
-            <CardHeader>
-                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                    <div>
-                        <CardTitle className="flex items-center gap-2 text-2xl">
-                            <Lightbulb className="text-primary"/>
-                            Financial Health Report
-                        </CardTitle>
-                        <CardDescription>A personalized analysis of your complete financial activity.</CardDescription>
-                    </div>
-                </div>
-            </CardHeader>
-            <CardContent className="grid gap-8">
-                <div className="grid md:grid-cols-3 gap-6">
-                    <div className="md:col-span-2 space-y-2">
-                        <h3 className="font-semibold text-lg">Summary</h3>
-                        <p className="text-muted-foreground">{report.headlineSummary}</p>
-                    </div>
-                    <Card className="flex flex-col items-center justify-center p-4 bg-muted/50">
-                        <div className="flex items-center gap-2 mb-2">
-                            <p className="text-sm font-medium text-muted-foreground">Financial Wellness Score</p>
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                    <button aria-label="Report details">
-                                    <HelpCircle className="size-4 text-muted-foreground cursor-pointer" />
-                                    </button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-80" side="top" align="start">
-                                    <div className="space-y-4">
-                                        <h4 className="font-semibold">How is this calculated?</h4>
-                                        <p className="text-sm text-muted-foreground">
-                                            The AI starts with a base score of 50 and adjusts it based on a weighted assessment of these key factors:
-                                        </p>
-                                        <ul className="space-y-2 text-xs text-muted-foreground">
-                                            <li className="font-semibold">Cash Flow (30% weight): Your income vs. expenses.</li>
-                                            <li className="font-semibold">Savings & Goals (25% weight): Your progress towards savings goals.</li>
-                                            <li className="font-semibold text-destructive">Debt-to-Income (-35% weight): Your total debt load relative to income. High-interest debt has the largest negative impact.</li>
-                                            <li className="font-semibold">Budget Adherence (10% weight): How well you stick to your spending limits.</li>
-                                        </ul>
-                                    </div>
-                                </PopoverContent>
-                            </Popover>
-                        </div>
-                        <div className="flex items-baseline gap-2">
-                            <span className={`text-5xl font-bold ${getScoreColor(report.wellnessScore)}`}>{report.wellnessScore}</span>
-                            <span className="text-xl text-muted-foreground">/ 100</span>
-                        </div>
-                        <WellnessIcon className={`size-6 mt-2 ${getScoreColor(report.wellnessScore)}`} />
-                    </Card>
-                </div>
-
-                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <div className="space-y-2">
-                        <h3 className="font-semibold text-lg flex items-center gap-2"><PieChart className="size-5 text-primary"/>Budget Analysis</h3>
-                        <p className="text-sm text-muted-foreground">{report.budgetAnalysis}</p>
-                    </div>
-                    <div className="space-y-2">
-                        <h3 className="font-semibold text-lg flex items-center gap-2"><Target className="size-5 text-primary"/>Goal Analysis</h3>
-                        <p className="text-sm text-muted-foreground">{report.goalAnalysis}</p>
-                    </div>
-                    <div className="space-y-2">
-                        <h3 className="font-semibold text-lg flex items-center gap-2"><Briefcase className="size-5 text-primary"/>Investment Analysis</h3>
-                        <p className="text-sm text-muted-foreground">{report.investmentAnalysis}</p>
-                    </div>
-                    <div className="space-y-2">
-                        <h3 className="font-semibold text-lg flex items-center gap-2"><Banknote className="size-5 text-primary"/>Debt Analysis</h3>
-                        <p className="text-sm text-muted-foreground">{report.debtAnalysis}</p>
-                    </div>
-                </div>
-
-                <div className="space-y-4">
-                    <h3 className="font-semibold text-lg">Key Insights</h3>
-                    <div className="grid md:grid-cols-3 gap-4">
-                        {report.keyInsights.map((insight, index) => (
-                            <div key={index} className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg">
-                                <Info className="size-5 mt-1 text-primary"/>
-                                <p className="text-sm text-muted-foreground">{insight}</p>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                <div className="space-y-4">
-                    <h3 className="font-semibold text-lg">Actionable Advice</h3>
-                    <div className="grid md:grid-cols-3 gap-4">
-                        {report.actionableAdvice.map((advice, index) => (
-                            <div key={index} className="flex items-start gap-3 p-3 bg-primary/10 rounded-lg border border-primary/20">
-                                <Target className="size-5 mt-1 text-primary"/>
-                                <p className="text-sm">{advice}</p>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </CardContent>
-             <CardFooter>
-                <Button onClick={fetchReport} disabled={isDataLoading}>
-                    {isDataLoading ? <Loader2 className="mr-2 animate-spin"/> : <RefreshCw className="mr-2"/>}
-                    {isDataLoading ? "Loading Data..." : "Regenerate Report"}
-                </Button>
-            </CardFooter>
-        </Card>
-    );
+  );
 }

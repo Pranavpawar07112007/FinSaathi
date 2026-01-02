@@ -17,7 +17,7 @@ import {
   type FinancialOverviewOutput,
 } from '@/ai/flows/generate-financial-overview';
 import type { WithId } from '@/firebase/firestore/use-collection';
-import { Lightbulb, Info, TrendingUp, Target, ShieldCheck, AlertTriangle, HelpCircle, RefreshCw, PieChart, Briefcase, Banknote, Loader2, Sparkles } from 'lucide-react';
+import { Lightbulb, Info, TrendingUp, Target, ShieldCheck, AlertTriangle, HelpCircle, RefreshCw, PieChart, Briefcase, Banknote, Loader2 } from 'lucide-react';
 import {
   Popover,
   PopoverContent,
@@ -26,8 +26,6 @@ import {
 import { Button } from '../ui/button';
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from '@/firebase';
 import { collection, query, doc } from 'firebase/firestore';
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { isWithinInterval, startOfMonth, endOfMonth, startOfYear, endOfYear } from 'date-fns';
 
 
 interface FinancialHealthReportProps {
@@ -35,8 +33,6 @@ interface FinancialHealthReportProps {
   budgets: WithId<any>[];
   goals: WithId<any>[];
 }
-
-type ReportPeriod = 'monthly' | 'yearly' | 'all';
 
 const getScoreColor = (score: number) => {
     if (score >= 80) return "text-green-500";
@@ -50,11 +46,8 @@ export function FinancialHealthReport({
   goals,
 }: FinancialHealthReportProps) {
   const [report, setReport] = useState<FinancialOverviewOutput | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [period, setPeriod] = useState<ReportPeriod>('monthly');
-  const [reportGenerated, setReportGenerated] = useState(false);
-
 
   const { user } = useUser();
   const firestore = useFirestore();
@@ -63,35 +56,18 @@ export function FinancialHealthReport({
   const accountsQuery = useMemoFirebase(() => !user ? null : query(collection(firestore, `users/${user.uid}/accounts`)), [user, firestore]);
   const investmentsQuery = useMemoFirebase(() => !user ? null : query(collection(firestore, `users/${user.uid}/investments`)), [user, firestore]);
   const debtsQuery = useMemoFirebase(() => !user ? null : query(collection(firestore, `users/${user.uid}/debts`)), [user, firestore]);
+  const userProfileRef = useMemoFirebase(() => !user ? null : doc(firestore, `users/${user.uid}/profile/${user.uid}`), [user, firestore]);
 
   const { data: accounts, isLoading: loadingAccounts } = useCollection(accountsQuery);
   const { data: investments, isLoading: loadingInvestments } = useCollection(investmentsQuery);
   const { data: debts, isLoading: loadingDebts } = useCollection(debtsQuery);
+  const { data: userProfile, isLoading: loadingProfile } = useDoc(userProfileRef);
 
-  const isDataLoading = loadingAccounts || loadingInvestments || loadingDebts;
-
-  useEffect(() => {
-    if (reportGenerated) {
-      fetchReport();
-    }
-  }, [period, reportGenerated]);
-
-
-  const filteredTransactions = useMemo(() => {
-    const now = new Date();
-    if (period === 'monthly') {
-      return transactions.filter(t => isWithinInterval(new Date(t.date), { start: startOfMonth(now), end: endOfMonth(now) }));
-    }
-    if (period === 'yearly') {
-      return transactions.filter(t => isWithinInterval(new Date(t.date), { start: startOfYear(now), end: endOfYear(now) }));
-    }
-    return transactions;
-  }, [transactions, period]);
-
+  const isDataLoading = loadingAccounts || loadingInvestments || loadingDebts || loadingProfile;
 
   const processedBudgets = useMemo(() => {
     return budgets.map(budget => {
-        const spent = filteredTransactions
+        const spent = transactions
             .filter(t => t.category === budget.name && t.amount < 0)
             .reduce((acc, t) => acc + Math.abs(t.amount), 0);
         return {
@@ -100,29 +76,40 @@ export function FinancialHealthReport({
             spent,
         }
     })
-  }, [budgets, filteredTransactions]);
+  }, [budgets, transactions]);
+  
+  const achievementsSummary = useMemo(() => {
+    return {
+        points: userProfile?.points || 0,
+        count: userProfile?.achievements?.length || 0,
+    }
+  }, [userProfile]);
 
 
   const fetchReport = useCallback(async (retries = 1) => {
     setIsLoading(true);
     setError(null);
-    setReportGenerated(true);
     let caughtError: any = null;
 
-    if (!accounts || !investments || !debts) {
-        setError('Could not generate report because some financial data is missing.');
-        setIsLoading(false);
+    if (!accounts || !investments || !debts || !userProfile) {
+        // This check is important because the effect depends on this data.
+        // If data is still loading, we should not proceed.
+        if (!isDataLoading) {
+            setError('Could not generate report because some financial data is missing.');
+            setIsLoading(false);
+        }
         return;
     };
 
     try {
         const input: FinancialOverviewInput = {
-            transactions: JSON.stringify(filteredTransactions.slice(0, 50)),
+            transactions: JSON.stringify(transactions.slice(0, 50)),
             accounts: JSON.stringify(accounts),
             investments: JSON.stringify(investments),
             budgets: JSON.stringify(processedBudgets),
             goals: JSON.stringify(goals),
             debts: JSON.stringify(debts),
+            achievements: JSON.stringify(achievementsSummary),
         };
 
         const result = await generateFinancialOverview(input);
@@ -140,35 +127,19 @@ export function FinancialHealthReport({
         setIsLoading(false);
       }
     }
-  }, [filteredTransactions, processedBudgets, goals, accounts, investments, debts]);
+  }, [transactions, processedBudgets, goals, accounts, investments, debts, achievementsSummary, userProfile, isDataLoading]);
+  
+  useEffect(() => {
+    // Only fetch the report if the dependent data is not loading.
+    if (!isDataLoading) {
+      fetchReport();
+    }
+  }, [isDataLoading, fetchReport]);
 
-  const renderInitialState = () => (
-     <Card className="w-full">
-        <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-2xl">
-                <Lightbulb className="text-primary"/>
-                Financial Health Report
-            </CardTitle>
-            <CardDescription>Select a period and generate a personalized analysis of your financial activity.</CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col items-center justify-center gap-8 py-10">
-              <Tabs value={period} onValueChange={(value) => setPeriod(value as ReportPeriod)}>
-                <TabsList>
-                    <TabsTrigger value="monthly">Monthly</TabsTrigger>
-                    <TabsTrigger value="yearly">Yearly</TabsTrigger>
-                    <TabsTrigger value="all">All Time</TabsTrigger>
-                </TabsList>
-            </Tabs>
-            <Button onClick={() => fetchReport()} disabled={isDataLoading}>
-                {isDataLoading ? <Loader2 className="mr-2 animate-spin"/> : <Sparkles className="mr-2"/>}
-                {isDataLoading ? "Loading Your Data..." : "Generate Report"}
-            </Button>
-        </CardContent>
-     </Card>
-  );
 
-  const renderLoadingState = () => (
-     <Card>
+  if (isLoading || isDataLoading) {
+    return (
+      <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-2xl">
             <Lightbulb className="text-primary"/>
@@ -183,9 +154,11 @@ export function FinancialHealthReport({
           </div>
         </CardContent>
       </Card>
-  );
+    );
+  }
 
-  const renderErrorState = () => (
+  if (error) {
+    return (
     <Card className="border-destructive/50">
         <CardHeader>
             <CardTitle className="flex items-center gap-2 text-destructive">
@@ -196,21 +169,30 @@ export function FinancialHealthReport({
         <CardContent>
             <p>{error}</p>
         </CardContent>
-        <CardFooter className="gap-2">
+        <CardFooter>
             <Button variant="destructive" onClick={() => fetchReport()}>
                 <RefreshCw className="mr-2" />
                 Retry Analysis
             </Button>
-             <Button variant="outline" onClick={() => setReportGenerated(false)}>
-                Go Back
-            </Button>
         </CardFooter>
     </Card>
-  );
+    );
+  }
 
-  const renderReportState = () => {
-    if (!report) return null;
-    const WellnessIcon = report.wellnessScore >= 80 ? ShieldCheck : report.wellnessScore >= 50 ? TrendingUp : AlertTriangle;
+  if (!report) {
+    return (
+      <Card>
+        <CardHeader>
+            <CardTitle>Financial Health Report</CardTitle>
+        </CardHeader>
+        <CardContent className="text-center text-muted-foreground">
+            Could not generate a report. There might not be enough data.
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const WellnessIcon = report.wellnessScore >= 80 ? ShieldCheck : report.wellnessScore >= 50 ? TrendingUp : AlertTriangle;
 
     return (
         <Card className="w-full">
@@ -223,13 +205,6 @@ export function FinancialHealthReport({
                         </CardTitle>
                         <CardDescription>A personalized analysis of your complete financial activity.</CardDescription>
                     </div>
-                     <Tabs value={period} onValueChange={(value) => setPeriod(value as ReportPeriod)}>
-                        <TabsList>
-                            <TabsTrigger value="monthly">Monthly</TabsTrigger>
-                            <TabsTrigger value="yearly">Yearly</TabsTrigger>
-                            <T-absTrigger value="all">All Time</T-absTrigger>
-                        </TabsList>
-                    </Tabs>
                 </div>
             </CardHeader>
             <CardContent className="grid gap-8">
@@ -322,19 +297,6 @@ export function FinancialHealthReport({
             </CardFooter>
         </Card>
     );
-  }
-
-  if (isLoading) {
-    return renderLoadingState();
-  }
-
-  if (error) {
-    return renderErrorState();
-  }
-
-  if (!reportGenerated || !report) {
-    return renderInitialState();
-  }
-  
-  return renderReportState();
 }
+
+    

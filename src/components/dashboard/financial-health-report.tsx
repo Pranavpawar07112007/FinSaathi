@@ -26,9 +26,7 @@ import {
 import { Button } from '../ui/button';
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from '@/firebase';
 import { collection, query, doc } from 'firebase/firestore';
-import { getMonth, getYear, parseISO, subMonths, subYears, startOfMonth, endOfMonth, startOfYear, endOfYear } from 'date-fns';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
+import { getMonth, getYear, parseISO, startOfMonth, endOfMonth } from 'date-fns';
 
 interface FinancialHealthReportProps {
   transactions: WithId<any>[];
@@ -36,7 +34,6 @@ interface FinancialHealthReportProps {
   goals: WithId<any>[];
 }
 
-type Period = 'monthly' | 'yearly' | 'all';
 
 const getScoreColor = (score: number) => {
     if (score >= 80) return "text-green-500";
@@ -52,7 +49,6 @@ export function FinancialHealthReport({
   const [report, setReport] = useState<FinancialOverviewOutput | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedPeriod, setSelectedPeriod] = useState<Period>('monthly');
 
   const { user } = useUser();
   const firestore = useFirestore();
@@ -69,30 +65,16 @@ export function FinancialHealthReport({
 
   const isDataLoading = loadingAccounts || loadingInvestments || loadingDebts || loadingProfile;
 
-  const getFilteredTransactions = useCallback(() => {
+  const getCurrentMonthTransactions = useCallback(() => {
     if (!transactions) return [];
     const now = new Date();
-
-    switch (selectedPeriod) {
-        case 'monthly':
-            const currentMonthStart = startOfMonth(now);
-            const currentMonthEnd = endOfMonth(now);
-            return transactions.filter(t => {
-                const transactionDate = parseISO(t.date);
-                return transactionDate >= currentMonthStart && transactionDate <= currentMonthEnd;
-            });
-        case 'yearly':
-            const currentYearStart = startOfYear(now);
-            const currentYearEnd = endOfYear(now);
-            return transactions.filter(t => {
-                const transactionDate = parseISO(t.date);
-                return transactionDate >= currentYearStart && transactionDate <= currentYearEnd;
-            });
-        case 'all':
-        default:
-            return transactions;
-    }
-  }, [transactions, selectedPeriod]);
+    const currentMonthStart = startOfMonth(now);
+    const currentMonthEnd = endOfMonth(now);
+    return transactions.filter(t => {
+        const transactionDate = parseISO(t.date);
+        return transactionDate >= currentMonthStart && transactionDate <= currentMonthEnd;
+    });
+  }, [transactions]);
 
 
   const fetchReport = useCallback(async () => {
@@ -106,10 +88,10 @@ export function FinancialHealthReport({
         return;
     };
 
-    const filteredTransactions = getFilteredTransactions();
+    const currentMonthTransactions = getCurrentMonthTransactions();
     
     const processedBudgets = budgets.map(budget => {
-        const spent = filteredTransactions
+        const spent = currentMonthTransactions
             .filter(t => t.category === budget.name && t.amount < 0)
             .reduce((acc, t) => acc + Math.abs(t.amount), 0);
         return {
@@ -126,7 +108,7 @@ export function FinancialHealthReport({
 
     try {
         const input: FinancialOverviewInput = {
-            transactions: JSON.stringify(filteredTransactions),
+            transactions: JSON.stringify(currentMonthTransactions),
             accounts: JSON.stringify(accounts),
             investments: JSON.stringify(investments),
             budgets: JSON.stringify(processedBudgets),
@@ -143,20 +125,20 @@ export function FinancialHealthReport({
     } finally {
         setIsGenerating(false);
     }
-  }, [isDataLoading, accounts, investments, debts, userProfile, getFilteredTransactions, budgets, goals]);
+  }, [isDataLoading, accounts, investments, debts, userProfile, getCurrentMonthTransactions, budgets, goals]);
 
   const renderInitialState = () => (
     <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-4 rounded-lg">
         <Sparkles className="size-12 mb-4 text-primary" />
         <h3 className="text-lg font-semibold">Generate Your Financial Health Report</h3>
-        <p>Select a time period and let FinSaathi analyze your financial data to provide personalized insights and a wellness score.</p>
+        <p>Let FinSaathi analyze your current month's activity to provide personalized insights and a wellness score.</p>
     </div>
   );
 
   const renderGeneratingState = () => (
      <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-4 rounded-lg">
         <Loader2 className="size-12 animate-spin mb-4" />
-        <p>FinSaathi is analyzing your data for the selected period...</p>
+        <p>FinSaathi is analyzing your data...</p>
     </div>
   );
 
@@ -195,7 +177,7 @@ export function FinancialHealthReport({
                                 <div className="space-y-4">
                                     <h4 className="font-semibold">How is this calculated?</h4>
                                     <p className="text-sm text-muted-foreground">
-                                        The AI starts with a base score of 50 and adjusts it based on a weighted assessment of these key factors:
+                                        The AI starts with a base score of 50 and adjusts it based on a weighted assessment of these key factors for the current month:
                                     </p>
                                     <ul className="space-y-2 text-xs text-muted-foreground">
                                         <li className="font-semibold">Cash Flow (30% weight): Your income vs. expenses.</li>
@@ -264,22 +246,11 @@ export function FinancialHealthReport({
   return (
     <Card className="w-full">
         <CardHeader>
-            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                <div>
-                    <CardTitle className="flex items-center gap-2 text-2xl">
-                        <Lightbulb className="text-primary"/>
-                        Financial Health Report
-                    </CardTitle>
-                    <CardDescription>Get a personalized AI analysis of your financial activity.</CardDescription>
-                </div>
-                 <Tabs value={selectedPeriod} onValueChange={(value) => setSelectedPeriod(value as Period)} className="w-full md:w-auto">
-                    <TabsList className="grid w-full grid-cols-3">
-                        <TabsTrigger value="monthly">Monthly</TabsTrigger>
-                        <TabsTrigger value="yearly">Yearly</TabsTrigger>
-                        <TabsTrigger value="all">All Time</TabsTrigger>
-                    </TabsList>
-                </Tabs>
-            </div>
+            <CardTitle className="flex items-center gap-2 text-2xl">
+                <Lightbulb className="text-primary"/>
+                Financial Health Report
+            </CardTitle>
+            <CardDescription>Get a personalized AI analysis of your financial activity for the current month.</CardDescription>
         </CardHeader>
         <CardContent className="min-h-[300px] flex items-center justify-center">
            {isGenerating ? renderGeneratingState() : error ? renderErrorState() : report ? renderReport() : renderInitialState()}
@@ -294,3 +265,4 @@ export function FinancialHealthReport({
     </Card>
   );
 }
+

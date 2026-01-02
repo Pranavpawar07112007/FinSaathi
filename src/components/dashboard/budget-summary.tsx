@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -15,6 +16,7 @@ import Link from 'next/link';
 import { useMemo } from 'react';
 import type { WithId } from '@/firebase/firestore/use-collection';
 import { Progress } from '../ui/progress';
+import { getMonth, getYear, parseISO } from 'date-fns';
 
 interface Budget {
   name: string;
@@ -22,6 +24,8 @@ interface Budget {
 }
 
 interface Transaction {
+    id: string;
+    date: string; // YYYY-MM-DD
     amount: number;
     category: string;
 }
@@ -43,9 +47,23 @@ export function BudgetSummary({ budgets, transactions, isLoading }: BudgetSummar
 
   const summarizedBudgets = useMemo(() => {
     if (!budgets) return [];
+
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    const currentMonthTransactions = transactions?.filter(t => {
+        try {
+            const transactionDate = parseISO(t.date);
+            return getYear(transactionDate) === currentYear && getMonth(transactionDate) === currentMonth;
+        } catch {
+            return false;
+        }
+    }) || [];
+
     return budgets.map((budget) => {
       const spent =
-        transactions
+        currentMonthTransactions
           ?.filter((t) => t.category === budget.name && t.amount < 0)
           .reduce((acc, t) => acc + Math.abs(t.amount), 0) || 0;
       const percentage = budget.limit > 0 ? (spent / budget.limit) * 100 : 0;
@@ -58,7 +76,7 @@ export function BudgetSummary({ budgets, transactions, isLoading }: BudgetSummar
       <CardHeader>
         <CardTitle>Budget Summary</CardTitle>
         <CardDescription>
-          A quick look at your spending limits.
+          Your spending limits for the current month.
         </CardDescription>
       </CardHeader>
       <CardContent>

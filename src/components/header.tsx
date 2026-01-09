@@ -176,7 +176,7 @@ export default function Header() {
                     id: `budget-${budget.id}-warning`,
                     type: 'budget' as const,
                     title: `Budget Warning: ${budget.name}`,
-                    description: `You\'ve spent ${formatCurrency(spent)} (${usage.toFixed(0)}%) of your ${formatCurrency(budget.limit)} budget.`,
+                    description: `You've spent ${formatCurrency(spent)} (${usage.toFixed(0)}%) of your ${formatCurrency(budget.limit)} budget.`,
                 });
             }
         });

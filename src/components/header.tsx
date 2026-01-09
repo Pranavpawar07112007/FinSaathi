@@ -55,7 +55,7 @@ import { Badge } from './ui/badge';
 import { Sidebar } from './dashboard/sidebar';
 import { detectSubscriptions, type DetectSubscriptionsOutput } from '@/ai/flows/detect-subscriptions-flow';
 import { ScrollArea } from './ui/scroll-area';
-import { differenceInDays, parseISO } from 'date-fns';
+import { differenceInDays, parseISO, getMonth, getYear } from 'date-fns';
 
 
 const formatCurrency = (amount: number) => {
@@ -128,7 +128,9 @@ export default function Header() {
     setIsNotificationsLoading(true);
     const allNotifications: Notification[] = [];
     const dismissedIds = JSON.parse(sessionStorage.getItem(DISMISSED_NOTIFICATIONS_KEY) || '[]');
-
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
 
     // 1. Fetch upcoming bills with new reminder logic
     try {
@@ -157,10 +159,16 @@ export default function Header() {
 
     // 2. Check for budget warnings
     if (budgets && transactions) {
+        const currentMonthTransactions = transactions.filter(t => {
+            const transactionDate = parseISO(t.date);
+            return getYear(transactionDate) === currentYear && getMonth(transactionDate) === currentMonth;
+        });
+
         budgets.forEach(budget => {
-            const spent = transactions
-                .filter(t => t.category === budget.name && t.type === 'expense')
-                .reduce((acc, t) => acc + Math.abs(t.amount), 0);
+            const budgetTransactions = currentMonthTransactions
+                .filter(t => t.category === budget.name && t.type === 'expense');
+            
+            const spent = budgetTransactions.reduce((acc, t) => acc + Math.abs(t.amount), 0);
             
             const usage = (spent / budget.limit) * 100;
 
@@ -172,11 +180,24 @@ export default function Header() {
                     description: `You are ${formatCurrency(spent - budget.limit)} over your budget.`,
                 });
             } else if (usage >= 80) {
+                 // Find the most frequent expense description
+                const expenseCounts = budgetTransactions.reduce((acc, t) => {
+                    acc[t.description] = (acc[t.description] || 0) + 1;
+                    return acc;
+                }, {} as Record<string, number>);
+
+                const mostFrequentExpense = Object.keys(expenseCounts).reduce((a, b) => expenseCounts[a] > expenseCounts[b] ? a : b, '');
+
+                let description = `You've spent ${formatCurrency(spent)} (${usage.toFixed(0)}%) of your ${formatCurrency(budget.limit)} budget.`;
+                if (mostFrequentExpense) {
+                    description += ` The most frequent expense is ${mostFrequentExpense}.`;
+                }
+
                 allNotifications.push({
                     id: `budget-${budget.id}-warning`,
                     type: 'budget' as const,
                     title: `Budget Warning: ${budget.name}`,
-                    description: `You've spent ${formatCurrency(spent)} (${usage.toFixed(0)}%) of your ${formatCurrency(budget.limit)} budget.`,
+                    description: description,
                 });
             }
         });

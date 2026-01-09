@@ -11,6 +11,7 @@ import { CategoryBreakdownChart } from '@/components/analytics/category-breakdow
 import { MonthlyOverviewChart } from '@/components/analytics/monthly-overview-chart';
 import { GoalProgressChart } from '@/components/analytics/goal-progress-chart';
 import type { Transaction, Goal } from '../page';
+import type { Account } from '@/app/accounts/page';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -35,6 +36,7 @@ export default function AnalyticsPage() {
   const now = new Date();
   const [filterYear, setFilterYear] = useState<string>(now.getFullYear().toString());
   const [filterMonth, setFilterMonth] = useState<string>(now.getMonth().toString());
+  const [filterAccount, setFilterAccount] = useState<string>('all');
 
   const transactionsQuery = useMemoFirebase(() => {
     if (!user) return null;
@@ -47,6 +49,12 @@ export default function AnalyticsPage() {
     return query(collection(firestore, 'users', user.uid, 'goals'));
   }, [user, firestore]);
   const { data: goals, isLoading: isLoadingGoals } = useCollection<Goal>(goalsQuery);
+
+  const accountsQuery = useMemoFirebase(() => {
+    if (!user) return null;
+    return query(collection(firestore, 'users', user.uid, 'accounts'));
+  }, [user, firestore]);
+  const { data: accounts, isLoading: isLoadingAccounts } = useCollection<Account>(accountsQuery);
 
   useEffect(() => {
     if (!isUserLoading && !user) {
@@ -69,9 +77,15 @@ export default function AnalyticsPage() {
       const transactionDate = parseISO(t.date);
       const yearMatch = filterYear === 'all' || getYear(transactionDate).toString() === filterYear;
       const monthMatch = filterMonth === 'all' || getMonth(transactionDate).toString() === filterMonth;
-      return yearMatch && monthMatch;
+      
+      const isTransfer = t.type === 'transfer';
+      const accountMatch = filterAccount === 'all' || 
+                           (isTransfer ? (t.fromAccountId === filterAccount || t.toAccountId === filterAccount) 
+                                       : t.accountId === filterAccount);
+
+      return yearMatch && monthMatch && accountMatch;
     });
-  }, [transactions, filterYear, filterMonth]);
+  }, [transactions, filterYear, filterMonth, filterAccount]);
 
 
   useEffect(() => {
@@ -92,9 +106,10 @@ export default function AnalyticsPage() {
   const clearFilters = () => {
     setFilterYear('all');
     setFilterMonth('all');
+    setFilterAccount('all');
   };
 
-  const pageIsLoading = isUserLoading || (isLoading && isLoadingTransactions);
+  const pageIsLoading = isUserLoading || isLoadingAccounts || (isLoading && isLoadingTransactions);
 
   if (pageIsLoading || !user) {
     return (
@@ -121,7 +136,7 @@ export default function AnalyticsPage() {
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
                     <Select value={filterYear} onValueChange={setFilterYear}>
                         <SelectTrigger><SelectValue placeholder="Year" /></SelectTrigger>
                         <SelectContent>
@@ -134,6 +149,13 @@ export default function AnalyticsPage() {
                         <SelectContent>
                             <SelectItem value="all">All Months</SelectItem>
                             {MONTHS.map((month, index) => <SelectItem key={month} value={index.toString()}>{month}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                     <Select value={filterAccount} onValueChange={setFilterAccount}>
+                        <SelectTrigger><SelectValue placeholder="Account" /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Accounts</SelectItem>
+                            {accounts?.map(acc => <SelectItem key={acc.id} value={acc.id}>{acc.name}</SelectItem>)}
                         </SelectContent>
                     </Select>
                     <Button variant="outline" onClick={clearFilters}>

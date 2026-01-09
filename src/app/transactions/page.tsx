@@ -89,6 +89,7 @@ export default function TransactionsPage() {
   const [filterMonth, setFilterMonth] = useState<string>(now.getMonth().toString());
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [filterType, setFilterType] = useState<string>('all');
+  const [filterAccount, setFilterAccount] = useState<string>('all');
 
 
   const { user } = useUser();
@@ -146,9 +147,15 @@ export default function TransactionsPage() {
       const monthMatch = filterMonth === 'all' || getMonth(transactionDate).toString() === filterMonth;
       const categoryMatch = filterCategory === 'all' || t.category === filterCategory;
       const typeMatch = filterType === 'all' || t.type === filterType;
-      return yearMatch && monthMatch && categoryMatch && typeMatch;
+      
+      const isTransfer = t.type === 'transfer';
+      const accountMatch = filterAccount === 'all' || 
+                           (isTransfer ? (t.fromAccountId === filterAccount || t.toAccountId === filterAccount) 
+                                       : t.accountId === filterAccount);
+
+      return yearMatch && monthMatch && categoryMatch && typeMatch && accountMatch;
     }) || [];
-  }, [transactions, filterYear, filterMonth, filterCategory, filterType]);
+  }, [transactions, filterYear, filterMonth, filterCategory, filterType, filterAccount]);
 
   const selectedTransactions = useMemo(() => {
     return transactions?.filter(t => selectedIds.has(t.id)) || [];
@@ -159,6 +166,7 @@ export default function TransactionsPage() {
     setFilterMonth('all');
     setFilterCategory('all');
     setFilterType('all');
+    setFilterAccount('all');
   };
 
   const handleEditClick = (transaction: WithId<Transaction>) => {
@@ -318,7 +326,7 @@ export default function TransactionsPage() {
                       </>
                 )}
             </div>
-            <div className="pt-6 grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div className="pt-6 grid grid-cols-2 md:grid-cols-6 gap-4">
                   <Select value={filterYear} onValueChange={setFilterYear}>
                     <SelectTrigger><SelectValue placeholder="Year" /></SelectTrigger>
                     <SelectContent>
@@ -331,6 +339,13 @@ export default function TransactionsPage() {
                     <SelectContent>
                         <SelectItem value="all">All Months</SelectItem>
                         {MONTHS.map((month, index) => <SelectItem key={month} value={index.toString()}>{month}</SelectItem>)}
+                    </SelectContent>
+                </Select>
+                  <Select value={filterAccount} onValueChange={setFilterAccount}>
+                    <SelectTrigger><SelectValue placeholder="Account" /></SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Accounts</SelectItem>
+                        {accounts?.map(acc => <SelectItem key={acc.id} value={acc.id}>{acc.name}</SelectItem>)}
                     </SelectContent>
                 </Select>
                   <Select value={filterCategory} onValueChange={setFilterCategory}>

@@ -62,8 +62,9 @@ const prompt = ai.definePrompt({
   1.  **Analyze the CSV Header**: The CSV may or may not have a header. Identify which columns correspond to the transaction date, description, and amount. Common headers are "Date", "Transaction", "Description", "Debit", "Credit", "Amount".
   2.  **Determine Amount**: Some CSVs have separate "Debit" and "Credit" columns. If so, combine them into a single \`amount\` field. Debits are expenses and should be **negative**. Credits are income and should be **positive**. Other CSVs might have a single "Amount" column with positive and negative values. Handle this correctly.
   3.  **Parse Dates**: Dates can be in various formats (e.g., 'dd/mm/yyyy', 'mm-dd-yy', 'Mon dd'). Convert all dates to 'YYYY-MM-DD' format. Assume the current year if the year is not specified.
-  4.  **Categorize Transactions**: Based on the transaction description, assign a relevant category. Use standard categories like: Groceries, Transport, Entertainment, Housing, Salary, Utilities, Health, Shopping, Investment, Savings, Transfer, Other.
-  5.  **Handle Irrelevant Rows**: Ignore any rows that are not actual transactions (e.g., summaries, balances, empty rows).
+  4.  **Clean Descriptions**: From the raw transaction description, extract the primary merchant or person's name. Remove extraneous details like "UPI/DR/", transaction IDs, bank codes (e.g., "YESB"), or other machine-readable codes. For example, 'TRANSFER TO 4897696162090 - UPI/DR/535436851766/VANDANA /YESB/q045675823/UPI' should become 'VANDANA'.
+  5.  **Categorize Transactions**: Based on the cleaned transaction description, assign a relevant category. Use standard categories like: Groceries, Transport, Entertainment, Housing, Salary, Utilities, Health, Shopping, Investment, Savings, Transfer, Other.
+  6.  **Handle Irrelevant Rows**: Ignore any rows that are not actual transactions (e.g., summaries, balances, empty rows).
 
   **CSV Data to Parse:**
   \`\`\`csv

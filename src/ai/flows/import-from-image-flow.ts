@@ -61,11 +61,12 @@ const prompt = ai.definePrompt({
 
   **Instructions:**
   1.  **Analyze the Image**: Carefully examine the screenshot to identify all individual transactions.
-  2.  **Extract Details**: For each transaction, extract the date, the description (recipient/sender name), the amount, and any visible transaction ID/reference number.
-  3.  **Determine Amount**: Payments made (debits) should be **negative** numbers. Payments received (credits) should be **positive** numbers.
-  4.  **Parse Dates**: Convert all dates to 'YYYY-MM-DD' format. If the year is not specified, assume it's the most recent possible year relative to today.
-  5.  **Categorize**: Assign a logical category like 'Income' or 'Expense' based on the description. Avoid 'Investment' or 'Transfer' as the image lacks context. Use specific categories like 'Food', 'Shopping', or 'Salary' where obvious.
-  6.  **Handle Non-Transactions**: Ignore any text or elements that are not specific transactions. If no transactions are found, return an empty array.
+  2.  **Extract Details**: For each transaction, extract the date, the description, the amount, and any visible transaction ID/reference number.
+  3.  **Clean Descriptions**: From the raw transaction description, extract the primary merchant or person's name. Remove extraneous details like "UPI/DR/", transaction IDs, bank codes (e.g., "YESB"), or other machine-readable codes. For example, 'TRANSFER TO 4897696162090 - UPI/DR/535436851766/VANDANA /YESB/q045675823/UPI' should become 'VANDANA'.
+  4.  **Determine Amount**: Payments made (debits) should be **negative** numbers. Payments received (credits) should be **positive** numbers.
+  5.  **Parse Dates**: Convert all dates to 'YYYY-MM-DD' format. If the year is not specified, assume it's the most recent possible year relative to today.
+  6.  **Categorize**: Assign a logical category like 'Food', 'Shopping', or 'Salary' based on the cleaned description.
+  7.  **Handle Non-Transactions**: Ignore any text or elements that are not specific transactions. If no transactions are found, return an empty array.
 
   **Image to Parse:**
   {{media url=imageDataUri}}

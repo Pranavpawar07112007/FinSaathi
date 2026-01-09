@@ -61,11 +61,12 @@ const prompt = ai.definePrompt({
 
   **Instructions:**
   1.  **Analyze the Document**: Carefully examine the PDF document to identify all individual transactions. The document could be a bank account statement or a credit card statement. Look for columns like 'Date', 'Description', 'Withdrawal', 'Deposit', 'Debit', 'Credit'.
-  2.  **Extract Details**: For each transaction, extract the date, the description (recipient/sender name or merchant), the amount, and any transaction reference number available.
-  3.  **Determine Amount**: Look for withdrawal/debit and deposit/credit columns. Amounts in a debit or withdrawal column should be **negative** numbers (expenses). Amounts in a credit or deposit column should be **positive** numbers (income). If there is only a single amount column, infer based on the description (e.g., "ATM Withdrawal" is negative).
-  4.  **Parse Dates**: Convert all dates to 'YYYY-MM-DD' format. If the year is not specified, assume it's the most recent possible year relative to today.
-  5.  **Categorize**: Assign a logical category. For bank statements, use simple categories like 'Income' or 'Expense' based on the amount. Use specific categories like 'Food', 'Shopping', or 'Salary' where obvious from the description. Avoid 'Investment' or 'Transfer' as the document lacks context.
-  6.  **Handle Non-Transactions**: Ignore any text or elements that are not specific transactions (like summary sections, bank info, etc.). If no transactions are found, return an empty array.
+  2.  **Extract Details**: For each transaction, extract the date, the description, the amount, and any transaction reference number available.
+  3.  **Clean Descriptions**: From the raw transaction description, extract the primary merchant or person's name. Remove extraneous details like "UPI/DR/", transaction IDs, bank codes (e.g., "YESB"), or other machine-readable codes. For example, 'TRANSFER TO 4897696162090 - UPI/DR/535436851766/VANDANA /YESB/q045675823/UPI' should become 'VANDANA'.
+  4.  **Determine Amount**: Look for withdrawal/debit and deposit/credit columns. Amounts in a debit or withdrawal column should be **negative** numbers (expenses). Amounts in a credit or deposit column should be **positive** numbers (income). If there is only a single amount column, infer based on the description (e.g., "ATM Withdrawal" is negative).
+  5.  **Parse Dates**: Convert all dates to 'YYYY-MM-DD' format. If the year is not specified, assume it's the most recent possible year relative to today.
+  6.  **Categorize**: Assign a logical category like 'Food', 'Shopping', or 'Salary' based on the cleaned description.
+  7.  **Handle Non-Transactions**: Ignore any text or elements that are not specific transactions (like summary sections, bank info, etc.). If no transactions are found, return an empty array.
 
   **PDF Document to Parse:**
   {{media url=pdfDataUri}}

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useActionState, useEffect, useState, useRef, useMemo } from 'react';
@@ -13,7 +12,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Bot, User, Send, Loader2, AlertTriangle, Sparkles } from 'lucide-react';
+import { Bot, User, Send, Loader2, AlertTriangle, Sparkles, Mic, MicOff } from 'lucide-react';
 import {
   useUser,
   useFirestore,
@@ -31,6 +30,8 @@ import type { Debt } from '@/app/debts/page';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
+
 
 const initialState = {
   response: null,
@@ -40,6 +41,14 @@ const initialState = {
 interface Message {
   role: 'user' | 'model';
   content: string;
+}
+
+// SpeechRecognition type declaration for window
+declare global {
+  interface Window {
+    SpeechRecognition: any;
+    webkitSpeechRecognition: any;
+  }
 }
 
 export default function ChatbotPage() {
@@ -54,6 +63,7 @@ export default function ChatbotPage() {
   const formRef = useRef<HTMLFormElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const recognitionRef = useRef<any>(null);
 
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -61,6 +71,64 @@ export default function ChatbotPage() {
       content: "Hello! I'm FinSaathi, your personal financial assistant. How can I help you today?",
     },
   ]);
+  
+  const { toast } = useToast();
+  const [isListening, setIsListening] = useState(false);
+
+  // --- Speech Recognition Logic ---
+  useEffect(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = true;
+      recognitionRef.current.interimResults = true;
+      recognitionRef.current.lang = 'en-US';
+
+      recognitionRef.current.onresult = (event: any) => {
+        const transcript = Array.from(event.results)
+          .map((result: any) => result[0])
+          .map((result) => result.transcript)
+          .join('');
+        if (inputRef.current) {
+          inputRef.current.value = transcript;
+        }
+      };
+      
+      recognitionRef.current.onerror = (event: any) => {
+        console.error('Speech recognition error:', event.error);
+        setIsListening(false);
+        toast({
+          variant: 'destructive',
+          title: 'Voice Error',
+          description: `An error occurred: ${event.error}. Please try again.`,
+        });
+      };
+      
+      recognitionRef.current.onend = () => {
+        setIsListening(false);
+      };
+
+    }
+  }, [toast]);
+
+  const handleToggleListening = () => {
+    if (!recognitionRef.current) {
+      toast({
+        variant: 'destructive',
+        title: 'Unsupported Browser',
+        description: 'Your browser does not support voice recognition.',
+      });
+      return;
+    }
+
+    if (isListening) {
+      recognitionRef.current.stop();
+    } else {
+      recognitionRef.current.start();
+    }
+    setIsListening(!isListening);
+  };
+
 
   // --- Data Fetching ---
   const transactionsQuery = useMemoFirebase(() => {
@@ -206,7 +274,7 @@ export default function ChatbotPage() {
               <Sparkles className="text-primary" /> Financial Chatbot
             </CardTitle>
             <CardDescription>
-              Ask FinSaathi anything about your finances.
+              Ask FinSaathi anything about your finances. Click the mic to use your voice.
             </CardDescription>
           </CardHeader>
           <CardContent className="flex-1 overflow-hidden">
@@ -284,12 +352,15 @@ export default function ChatbotPage() {
               <Input
                 ref={inputRef}
                 name="message"
-                placeholder="Ask about your spending, goals, or investments..."
+                placeholder="Ask about your spending, or click the mic..."
                 autoComplete="off"
                 disabled={isSubmitting}
               />
               <input type="hidden" name="history" value={JSON.stringify(history)} />
               <input type="hidden" name="financialContext" value={financialContext} />
+              <Button type="button" size="icon" variant={isListening ? 'destructive' : 'outline'} onClick={handleToggleListening} disabled={isSubmitting}>
+                {isListening ? <MicOff /> : <Mic />}
+              </Button>
               <Button type="submit" size="icon" disabled={isSubmitting}>
                 {isSubmitting ? <Loader2 className="animate-spin" /> : <Send />}
               </Button>

@@ -56,6 +56,7 @@ import { Sidebar } from './dashboard/sidebar';
 import { detectSubscriptions, type DetectSubscriptionsOutput } from '@/ai/flows/detect-subscriptions-flow';
 import { ScrollArea } from './ui/scroll-area';
 import { differenceInDays, parseISO, getMonth, getYear } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 
 const formatCurrency = (amount: number) => {
@@ -84,6 +85,16 @@ export default function Header() {
   
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isNotificationsLoading, setIsNotificationsLoading] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
 
   useEffect(() => {
@@ -241,8 +252,15 @@ export default function Header() {
   }
 
   return (
-    <header className="sticky top-4 z-50 transition-all duration-300">
-      <div className="flex h-16 items-center gap-4 border bg-background/80 px-4 backdrop-blur-sm sm:px-6 rounded-2xl mx-4 shadow-sm">
+    <header
+      className={cn(
+        'sticky top-0 z-50 transition-all duration-300',
+        isScrolled ? 'top-0' : 'top-4'
+      )}
+    >
+      <div className={cn('flex h-16 items-center gap-4 border bg-background/80 px-4 backdrop-blur-sm sm:px-6 transition-all duration-300',
+         isScrolled ? 'rounded-none' : 'mx-4 rounded-2xl shadow-sm'
+      )}>
         <Sheet>
           <SheetTrigger asChild>
             <Button variant="outline" size="icon" className="shrink-0">

@@ -14,9 +14,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
     pathname !== '/';
 
   return (
-    <>
+    <div className="flex min-h-screen w-full flex-col">
       {showHeader && <Header />}
-      <div className="flex-1">{children}</div>
-    </>
+      {children}
+    </div>
   );
 }

@@ -1,4 +1,5 @@
-'use server';
+
+'use client';
 
 import {
   Card,
@@ -11,10 +12,22 @@ import {
 import { getMarketNews, type MarketNewsItem } from '@/services/finnhub';
 import { ExternalLink, Newspaper } from 'lucide-react';
 import Image from 'next/image';
+import TradingViewWidget from '@/components/trading-view-widget';
+import { useEffect, useState } from 'react';
 
-async function StockMarketPage() {
-  // Fetch general market news on the server
-  const marketNews = await getMarketNews('general');
+function StockMarketPage() {
+  const [marketNews, setMarketNews] = useState<MarketNewsItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchNews() {
+      setIsLoading(true);
+      const news = await getMarketNews('general');
+      setMarketNews(news);
+      setIsLoading(false);
+    }
+    fetchNews();
+  }, []);
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
@@ -22,27 +35,55 @@ async function StockMarketPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Newspaper />
-            Stock Market News
+            Stock Market
           </CardTitle>
           <CardDescription>
-            Stay up-to-date with the latest news impacting the market.
+            Live market data and the latest news impacting stocks.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {marketNews && marketNews.length > 0 ? (
+          <div className="h-[500px] w-full mb-8">
+            <TradingViewWidget />
+          </div>
+
+          <h2 className="text-2xl font-bold tracking-tight mb-4">Market News</h2>
+          {isLoading ? (
+             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {Array.from({ length: 6 }).map((_, i) => (
+                    <Card key={i} className="flex flex-col">
+                        <div className="relative h-40 w-full bg-muted rounded-t-lg"></div>
+                        <CardHeader>
+                            <div className="h-5 bg-muted rounded w-3/4"></div>
+                             <div className="h-4 bg-muted rounded w-1/2 mt-2"></div>
+                        </CardHeader>
+                        <CardContent className="flex-grow">
+                             <div className="h-4 bg-muted rounded w-full mb-2"></div>
+                              <div className="h-4 bg-muted rounded w-5/6"></div>
+                        </CardContent>
+                        <CardFooter>
+                             <div className="h-5 bg-muted rounded w-24"></div>
+                        </CardFooter>
+                    </Card>
+                ))}
+             </div>
+          ) : marketNews && marketNews.length > 0 ? (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {marketNews.slice(0, 12).map((newsItem: MarketNewsItem) => (
                 <Card key={newsItem.id} className="flex flex-col">
-                  {newsItem.image && (
+                  {newsItem.image ? (
                     <div className="relative h-40 w-full">
                       <Image
                         src={newsItem.image}
                         alt={newsItem.headline}
-                        layout="fill"
-                        objectFit="cover"
+                        fill
+                        style={{objectFit: "cover"}}
                         className="rounded-t-lg"
                       />
                     </div>
+                  ) : (
+                     <div className="relative h-40 w-full bg-muted rounded-t-lg flex items-center justify-center">
+                        <Newspaper className="size-10 text-muted-foreground"/>
+                     </div>
                   )}
                   <CardHeader>
                     <CardTitle className="text-base leading-tight">

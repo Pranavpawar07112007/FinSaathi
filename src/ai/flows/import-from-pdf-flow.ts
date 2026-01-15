@@ -41,7 +41,7 @@ export type ImportFromPdfInput = z.infer<
 >;
 
 const ImportFromPdfOutputSchema = z.object({
-  accountName: z.string().optional().describe("The name of the bank or account holder from the statement (e.g., 'HDFC Bank', 'Savings A/C')."),
+  accountName: z.string().optional().describe("The name of the bank from the statement combined with the last 4 digits of the account number (e.g., 'HDFC Bank - 1234')."),
   accountNumber: z.string().optional().describe("The full account number if visible, or the last 4 digits."),
   transactions: z.array(TransactionSchema),
 });
@@ -62,7 +62,7 @@ const prompt = ai.definePrompt({
   prompt: `You are an expert at extracting transaction details from PDF bank and credit card statements.
 
   **Instructions:**
-  1.  **Find Account Info**: First, find the account holder's name, the bank's name, and the account number from the document. Combine them to create a descriptive account name like "HDFC Bank - XXXX1234".
+  1.  **Find Account Info**: First, find the account holder's name, the bank's name (e.g., "HDFC Bank", "State Bank of India"), and the account number from the document. Combine the bank name and the last 4 digits of the account number to create a descriptive account name like "HDFC Bank - 1234".
   2.  **Analyze the Document**: Carefully examine the PDF document to identify all individual transactions. The document could be a bank account statement or a credit card statement. Look for columns like 'Date', 'Description', 'Withdrawal', 'Deposit', 'Debit', 'Credit'.
   3.  **Extract Details**: For each transaction, extract the date, the description, the amount, and any transaction reference number available.
   4.  **Clean Descriptions**: From the raw transaction description, extract the primary merchant or person's name. Remove extraneous details like "UPI/DR/", transaction IDs, bank codes (e.g., "YESB"), or other machine-readable codes. For example, 'TRANSFER TO 4897696162090 - UPI/DR/535436851766/VANDANA /YESB/q045675823/UPI' should become 'VANDANA'.

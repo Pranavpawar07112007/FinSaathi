@@ -41,7 +41,7 @@ export type ImportFromImageInput = z.infer<
 >;
 
 const ImportFromImageOutputSchema = z.object({
-  accountName: z.string().optional().describe("The name of the bank or account holder if visible (e.g., 'HDFC Bank', 'Savings A/C')."),
+  accountName: z.string().optional().describe("The name of the bank and last 4 digits of the account number if visible (e.g., 'State Bank of India 4570')."),
   accountNumber: z.string().optional().describe("The last 4 digits of the account number, if visible."),
   transactions: z.array(TransactionSchema),
 });
@@ -62,7 +62,7 @@ const prompt = ai.definePrompt({
   prompt: `You are an expert at extracting transaction details from screenshots of Indian UPI payment apps (like Google Pay, PhonePe, Paytm).
 
   **Instructions:**
-  1.  **Find Account Info**: First, look for the account name or bank name (e.g., "HDFC Bank", "ICICI A/C") and the last 4 digits of the account number if they are visible on the screen.
+  1.  **Find the Correct Account Info**: Your top priority is to find the **source bank account**, not the UPI app's user ID. Look for phrases like "Paid by", "Debited from", or a bank name next to a partial account number (e.g., '...4570'). The correct account name is the Bank Name and its number (e.g., "State Bank of India 4570"). IGNORE the UPI ID (e.g., 'sukanya10072001@gmail.com') as the account name.
   2.  **Analyze the Image**: Carefully examine the screenshot to identify all individual transactions.
   3.  **Extract Details**: For each transaction, extract the date, the description, the amount, and any visible transaction ID/reference number.
   4.  **Clean Descriptions**: From the raw transaction description, extract the primary merchant or person's name. Remove extraneous details like "UPI/DR/", transaction IDs, bank codes (e.g., "YESB"), or other machine-readable codes. For example, 'TRANSFER TO 4897696162090 - UPI/DR/535436851766/VANDANA /YESB/q045675823/UPI' should become 'VANDANA'.

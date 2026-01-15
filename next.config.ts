@@ -34,6 +34,12 @@ const nextConfig: NextConfig = {
         hostname: 'blog.opalgroup.net',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'image.finnhub.io',
+        port: '',
+        pathname: '/**',
       }
     ],
   },

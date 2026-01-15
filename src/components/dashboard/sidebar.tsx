@@ -18,6 +18,7 @@ import {
   Banknote,
   AreaChart,
   ShieldCheck,
+  Newspaper,
 } from 'lucide-react';
 import { SheetClose } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
@@ -30,6 +31,7 @@ const menuItems = [
   { href: '/budgets', label: 'Budgets', icon: PieChart },
   { href: '/accounts', label: 'Accounts', icon: Landmark },
   { href: '/investments', label: 'Investments', icon: Briefcase },
+  { href: '/stock-market', label: 'Stock Market', icon: Newspaper },
   { href: '/debts', label: 'Debts', icon: Banknote },
   { href: '/goals', label: 'Goals', icon: Target },
   { href: '/tax-center', label: 'Tax Center', icon: ShieldCheck },

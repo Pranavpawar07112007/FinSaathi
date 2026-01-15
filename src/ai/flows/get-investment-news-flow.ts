@@ -52,6 +52,7 @@ const getMarketNewsForTicker = ai.defineTool(
           summary: z.string(),
           url: z.string(),
           source: z.string(),
+          image: z.string(),
       })),
     },
     async ({ ticker }) => getMarketNews(ticker)

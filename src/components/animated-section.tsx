@@ -11,12 +11,14 @@ interface AnimatedSectionProps {
 
 export function AnimatedSection({ children, className, delay = 0 }: AnimatedSectionProps) {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, amount: 0.2 });
+  const isInView = useInView(ref, { amount: 0.2 });
   const controls = useAnimation();
 
   useEffect(() => {
     if (isInView) {
       controls.start('visible');
+    } else {
+      controls.start('hidden');
     }
   }, [isInView, controls]);
 

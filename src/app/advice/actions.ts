@@ -25,6 +25,7 @@ const formSchema = z.object({
   debts: z.string().optional(),
   achievements: z.string().optional(),
   feedbackHistory: z.string().optional(),
+  marketNews: z.string().optional(),
 });
 
 type State = {
@@ -50,6 +51,7 @@ export async function getFinancialAdviceAction(
     debts: formData.get('debts'),
     achievements: formData.get('achievements'),
     feedbackHistory: formData.get('feedbackHistory'),
+    marketNews: formData.get('marketNews'),
   });
 
   if (!validatedFields.success) {
@@ -61,7 +63,7 @@ export async function getFinancialAdviceAction(
     };
   }
   
-  const { riskTolerance, financialGoals, adviceType, transactionHistory, budgets, goals, accounts, investments, debts, achievements, feedbackHistory } = validatedFields.data;
+  const { riskTolerance, financialGoals, adviceType, transactionHistory, budgets, goals, accounts, investments, debts, achievements, feedbackHistory, marketNews } = validatedFields.data;
 
   // Use transaction history and other data only if it's personalized advice and data is available
   const finalTransactionHistory = 
@@ -76,6 +78,7 @@ export async function getFinancialAdviceAction(
   const finalDebts = adviceType === 'personalized' && debts ? debts : 'No debt data provided.';
   const finalAchievements = adviceType === 'personalized' && achievements ? achievements : 'No achievement data provided.';
   const finalFeedbackHistory = adviceType === 'personalized' && feedbackHistory ? feedbackHistory : 'No feedback history provided.';
+  const finalMarketNews = adviceType === 'personalized' && marketNews ? marketNews : 'No market news provided.';
 
   const input: FinancialAdviceInput = {
     transactionHistory: finalTransactionHistory,
@@ -88,6 +91,7 @@ export async function getFinancialAdviceAction(
     riskTolerance,
     financialGoals,
     feedbackHistory: finalFeedbackHistory,
+    marketNews: finalMarketNews,
   };
 
   try {

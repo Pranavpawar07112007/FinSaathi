@@ -27,6 +27,7 @@ import { Button } from '../ui/button';
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from '@/firebase';
 import { collection, query, doc } from 'firebase/firestore';
 import { getMonth, getYear, parseISO, startOfMonth, endOfMonth } from 'date-fns';
+import { getMarketNews, type MarketNewsItem } from '@/services/finnhub';
 
 interface FinancialHealthReportProps {
   transactions: WithId<any>[];
@@ -49,9 +50,21 @@ export function FinancialHealthReport({
   const [report, setReport] = useState<FinancialOverviewOutput | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [marketNews, setMarketNews] = useState<MarketNewsItem[]>([]);
+  const [isLoadingNews, setIsLoadingNews] = useState(true);
 
   const { user } = useUser();
   const firestore = useFirestore();
+
+  useEffect(() => {
+    async function fetchNews() {
+      setIsLoadingNews(true);
+      const news = await getMarketNews('general');
+      setMarketNews(news.slice(0, 5)); // Get top 5 for context
+      setIsLoadingNews(false);
+    }
+    fetchNews();
+  }, []);
 
   const accountsQuery = useMemoFirebase(() => !user ? null : query(collection(firestore, `users/${user.uid}/accounts`)), [user, firestore]);
   const investmentsQuery = useMemoFirebase(() => !user ? null : query(collection(firestore, `users/${user.uid}/investments`)), [user, firestore]);
@@ -63,7 +76,7 @@ export function FinancialHealthReport({
   const { data: debts, isLoading: loadingDebts } = useCollection(debtsQuery);
   const { data: userProfile, isLoading: loadingProfile } = useDoc(userProfileRef);
 
-  const isDataLoading = loadingAccounts || loadingInvestments || loadingDebts || loadingProfile;
+  const isDataLoading = loadingAccounts || loadingInvestments || loadingDebts || loadingProfile || isLoadingNews;
 
   const getCurrentMonthTransactions = useCallback(() => {
     if (!transactions) return [];
@@ -115,6 +128,7 @@ export function FinancialHealthReport({
             goals: JSON.stringify(goals),
             debts: JSON.stringify(debts),
             achievements: JSON.stringify(achievementsSummary),
+            marketNews: JSON.stringify(marketNews),
         };
 
         const result = await generateFinancialOverview(input);
@@ -125,7 +139,7 @@ export function FinancialHealthReport({
     } finally {
         setIsGenerating(false);
     }
-  }, [isDataLoading, accounts, investments, debts, userProfile, getCurrentMonthTransactions, budgets, goals]);
+  }, [isDataLoading, accounts, investments, debts, userProfile, getCurrentMonthTransactions, budgets, goals, marketNews]);
 
   const renderInitialState = () => (
     <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-4 rounded-lg">
@@ -265,4 +279,3 @@ export function FinancialHealthReport({
     </Card>
   );
 }
-

@@ -40,6 +40,7 @@ const FinancialAdviceInputSchema = z.object({
     ),
   financialGoals: z.string().describe('The financial goals of the user.'),
   feedbackHistory: z.string().describe('A JSON string of the user\'s past feedback on advice they have received.'),
+  marketNews: z.string().describe('A JSON string of recent stock market news.'),
 });
 export type FinancialAdviceInput = z.infer<typeof FinancialAdviceInputSchema>;
 
@@ -76,6 +77,8 @@ const prompt = ai.definePrompt({
   - If they've rated advice as "bad", avoid making similar suggestions. For example, if they disliked a suggestion to invest in stocks, focus more on safer options like FDs or debt funds.
   - If they've rated advice as "good", lean into that style of recommendation.
 
+  **Incorporate Market News:** Analyze the provided market news and connect it to the user's specific investments if relevant. For example, if there's news about a stock the user owns, mention it.
+
   Here is the user's information:
   - Risk Tolerance: {{{riskTolerance}}}
   - Financial Goals: {{{financialGoals}}}
@@ -87,6 +90,7 @@ const prompt = ai.definePrompt({
   - Debts: {{{debts}}}
   - Achievements: {{{achievements}}}
   - **Past Feedback History**: {{{feedbackHistory}}}
+  - **Recent Market News**: {{{marketNews}}}
 
   If the transaction history and other data are available and relevant, base your advice on it to provide personalized recommendations. Look for connections between different data points (e.g., how spending habits affect goal progress, or how investments align with risk tolerance, or how debt might impact savings).
   If the transaction history is not available or the user requested general advice, provide general financial advice relevant to their goals and risk tolerance, without mentioning their specific spending.

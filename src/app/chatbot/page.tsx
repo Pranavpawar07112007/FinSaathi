@@ -33,6 +33,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { AnimatedSection } from '@/components/animated-section';
+import { getMarketNews, type MarketNewsItem } from '@/services/finnhub';
 
 
 const initialState = {
@@ -76,6 +77,8 @@ export default function ChatbotPage() {
   
   const { toast } = useToast();
   const [isListening, setIsListening] = useState(false);
+  const [marketNews, setMarketNews] = useState<MarketNewsItem[]>([]);
+  const [isLoadingNews, setIsLoadingNews] = useState(true);
 
   // --- Speech Recognition Logic ---
   useEffect(() => {
@@ -133,6 +136,16 @@ export default function ChatbotPage() {
 
 
   // --- Data Fetching ---
+  useEffect(() => {
+    async function fetchNews() {
+      setIsLoadingNews(true);
+      const news = await getMarketNews('general');
+      setMarketNews(news.slice(0, 5)); // Get top 5 news items for context
+      setIsLoadingNews(false);
+    }
+    fetchNews();
+  }, []);
+
   const transactionsQuery = useMemoFirebase(() => {
     if (!user) return null;
     return query(
@@ -194,7 +207,8 @@ export default function ChatbotPage() {
     isLoadingAccounts ||
     isLoadingInvestments ||
     isLoadingDebts ||
-    isProfileLoading;
+    isProfileLoading ||
+    isLoadingNews;
 
   const financialContext = useMemo(() => {
      if (isDataLoading) return "Data is still loading.";
@@ -211,8 +225,9 @@ export default function ChatbotPage() {
         goals,
         investments,
         debts,
+        marketNews,
      }, null, 2);
-  }, [isDataLoading, userProfile, accounts, transactions, budgets, goals, investments, debts]);
+  }, [isDataLoading, userProfile, accounts, transactions, budgets, goals, investments, debts, marketNews]);
   
   // --- Effects ---
   useEffect(() => {

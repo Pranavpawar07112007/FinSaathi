@@ -28,6 +28,7 @@ import type { Debt } from '@/app/debts/page';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { AnimatedSection } from '@/components/animated-section';
+import { getMarketNews, type MarketNewsItem } from '@/services/finnhub';
 
 const initialState = {
   message: null,
@@ -52,12 +53,24 @@ export default function AdvicePage() {
   const [adviceType, setAdviceType] = useState<AdviceType>('personalized');
   const [feedbackStatus, setFeedbackStatus] = useState<Record<string, FeedbackStatus>>({});
   const { toast } = useToast();
+  const [marketNews, setMarketNews] = useState<MarketNewsItem[]>([]);
+  const [isLoadingNews, setIsLoadingNews] = useState(true);
 
   useEffect(() => {
     if (!isUserLoading && !user) {
       router.push('/login');
     }
   }, [user, isUserLoading, router]);
+
+  useEffect(() => {
+    async function fetchNews() {
+      setIsLoadingNews(true);
+      const news = await getMarketNews('general');
+      setMarketNews(news.slice(0, 10)); // Get top 10 news items
+      setIsLoadingNews(false);
+    }
+    fetchNews();
+  }, []);
 
   const transactionsQuery = useMemoFirebase(() => {
     if (!user) return null;
@@ -109,7 +122,7 @@ export default function AdvicePage() {
   const { data: userProfile, isLoading: isProfileLoading } = useDoc(userProfileRef);
 
 
-  const isDataLoading = isUserLoading || isLoadingTransactions || isLoadingBudgets || isLoadingGoals || isLoadingAccounts || isLoadingInvestments || isProfileLoading || isLoadingDebts || isLoadingFeedback;
+  const isDataLoading = isUserLoading || isLoadingTransactions || isLoadingBudgets || isLoadingGoals || isLoadingAccounts || isLoadingInvestments || isProfileLoading || isLoadingDebts || isLoadingFeedback || isLoadingNews;
   
   const handleSubmitForm = () => {
     if(formRef.current) {
@@ -258,6 +271,7 @@ export default function AdvicePage() {
                     <input type="hidden" name="debts" value={adviceType === 'personalized' ? JSON.stringify(debts || []) : ''} />
                     <input type="hidden" name="achievements" value={adviceType === 'personalized' ? JSON.stringify(achievementsSummary) : ''} />
                     <input type="hidden" name="feedbackHistory" value={adviceType === 'personalized' ? JSON.stringify(feedbackHistory || []) : ''} />
+                    <input type="hidden" name="marketNews" value={adviceType === 'personalized' ? JSON.stringify(marketNews || []) : ''} />
                 </CardContent>
                 <CardFooter>
                     <Button type="submit" disabled={isSubmitting || (adviceType === 'personalized' && isDataLoading)}>

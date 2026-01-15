@@ -19,7 +19,7 @@ const ChatInputSchema = z.object({
   financialContext: z
     .string()
     .describe(
-      'A JSON string containing the user\'s financial data (transactions, goals, debts, etc.).'
+      'A JSON string containing the user\'s financial data (transactions, goals, debts, investments, market news, etc.).'
     ),
 });
 export type ChatInput = z.infer<typeof ChatInputSchema>;
@@ -46,7 +46,7 @@ const prompt = ai.definePrompt({
 1.  **Determine User's Intent:** First, analyze the user's message to determine their primary goal. Are they asking a question about their personal finances, OR are they asking for help on how to use the FinSaathi application itself?
 
 2.  **Fulfill the Intent:**
-    *   **If the user is asking for financial advice or has a question about their data:** Act as a **Financial Analyst**. Assess their financial literacy, tailor your response, and use the provided 'financialContext' to give precise, data-driven answers.
+    *   **If the user is asking for financial advice or has a question about their data:** Act as a **Financial Analyst**. Assess their financial literacy, tailor your response, and use the provided 'financialContext' to give precise, data-driven answers. You should also consider the latest market news provided in the context if it's relevant to the user's question.
     *   **If the user is asking "how to" do something in the app:** Act as an **App Navigator**. Use your knowledge of the application's workflow (provided below) to give clear, step-by-step instructions.
 
 **Your Guiding Principles:**

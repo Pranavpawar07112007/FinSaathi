@@ -39,6 +39,7 @@ const FinancialOverviewInputSchema = z.object({
   achievements: z
     .string()
     .describe("A JSON string of the user's earned achievements and total points."),
+  marketNews: z.string().describe('A JSON string of recent stock market news.'),
 });
 export type FinancialOverviewInput = z.infer<
   typeof FinancialOverviewInputSchema
@@ -65,7 +66,7 @@ const FinancialOverviewOutputSchema = z.object({
     .describe("A detailed paragraph analyzing savings goal progress. Mention specific goals and comment on their progress, suggesting actions if they are falling behind."),
   investmentAnalysis: z
     .string()
-    .describe("A detailed paragraph providing insights on the investment portfolio. Comment on the mix of investments and their performance if possible."),
+    .describe("A detailed paragraph providing insights on the investment portfolio. If there's relevant market news, correlate it with the user's investments."),
   debtAnalysis: z
     .string()
     .describe("A detailed paragraph analyzing the user's debt situation. Comment on high-interest debts and the overall debt-to-income ratio if possible."),
@@ -73,7 +74,7 @@ const FinancialOverviewOutputSchema = z.object({
     .array(z.string())
     .length(3)
     .describe(
-      'A list of exactly three interesting, non-obvious observations about spending, saving, or investing patterns. Connect data from different sources if possible (e.g., link debt payments to transaction history).'
+      'A list of exactly three interesting, non-obvious observations about spending, saving, or investing patterns. Connect data from different sources if possible (e.g., link debt payments to transaction history, or a stock\'s news to its performance).'
     ),
   actionableAdvice: z
     .array(z.string())
@@ -108,6 +109,7 @@ const prompt = ai.definePrompt({
   - Savings Goals: {{{goals}}}
   - Debts: {{{debts}}}
   - Earned Achievements & Points: {{{achievements}}}
+  - **Recent Market News**: {{{marketNews}}}
 
   Based on a holistic analysis of ALL this data, including any subscriptions you detect from the transactions, generate a detailed report with the following structure:
 
@@ -115,9 +117,9 @@ const prompt = ai.definePrompt({
   2.  **Financial Wellness Score**: An integer score from 0-100. Calculate this by evaluating their income vs. expenses, savings, investments, and debt levels. A higher score means better financial health. High debt should negatively impact the score.
   3.  **Budget Analysis**: A detailed paragraph on budget performance.
   4.  **Goal Analysis**: A detailed paragraph on savings goal progress.
-  5.  **Investment Analysis**: A detailed paragraph on the investment portfolio.
+  5.  **Investment Analysis**: A detailed paragraph on the investment portfolio. **Crucially, if there is market news relevant to any of the user's investments, mention it here.** For example, "Recent news about a partnership for 'Reliance Industries' could be positive for your holding."
   6.  **Debt Analysis**: A new paragraph analyzing the user's debts. Comment on high-interest debts and the overall debt load.
-  7.  **Key Insights**: Exactly three bullet points of interesting observations, connecting different data areas (e.g., "Your high-interest credit card debt might be slowing down your 'Vacation' goal progress.").
+  7.  **Key Insights**: Exactly three bullet points of interesting observations, connecting different data areas (e.g., "Your high-interest credit card debt might be slowing down your 'Vacation' goal progress."). If relevant, one insight should connect market news to the user's portfolio.
   8.  **Actionable Advice**: Exactly three friendly recommendations. Include advice related to managing debt if applicable (e.g., "Consider using the 'Debt Avalanche' method to tackle your highest-interest credit card first.").
 
   Always use Indian Rupee (₹) as the currency symbol where applicable. Your tone should be positive and empowering.`,

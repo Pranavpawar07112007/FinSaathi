@@ -30,6 +30,7 @@ import { checkAndAwardAchievementsAction } from '@/app/achievements/actions';
 import { useToast } from '@/hooks/use-toast';
 import { detectTaxDeductible } from '@/ai/flows/detect-tax-deductible-flow';
 import { Checkbox } from '../ui/checkbox';
+import { learnFromCategorization } from '@/ai/flows/learn-from-categorization-flow';
 
 const transactionSchema = z.object({
   description: z.string().min(1, 'Description is required'),
@@ -154,11 +155,20 @@ export function AddTransactionDialog({
         finalCategory = 'Transfer';
       } else if (!finalCategory) {
         const { category, error: categoryError } =
-          await getTransactionCategoryAction(data.description);
+          await getTransactionCategoryAction(data.description, user.uid);
         if (categoryError) {
           console.warn(categoryError);
         }
         finalCategory = category || 'Other';
+      }
+
+      // If the user provided a category, teach the AI.
+      if (data.category) {
+        await learnFromCategorization({
+            userId: user.uid,
+            description: data.description,
+            category: data.category,
+        });
       }
       
       const finalAmount = (transactionType === 'expense' || transactionType === 'investment') 

@@ -272,6 +272,20 @@
             "timestamp": { "type": "string", "format": "date-time", "description": "When the feedback was submitted." }
         },
         "required": ["id", "userId", "advice", "rating", "timestamp"]
+    },
+    "UserCategoryPreference": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserCategoryPreference",
+      "type": "object",
+      "description": "Stores a user's preferred category for a specific transaction description.",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the preference record." },
+        "userId": { "type": "string", "description": "The ID of the user who owns this preference." },
+        "description": { "type": "string", "description": "The transaction description." },
+        "category": { "type": "string", "description": "The user-assigned category for this description." },
+        "lastUsed": { "type": "string", "format": "date-time", "description": "The last time this preference was used or confirmed." }
+      },
+      "required": ["id", "userId", "description", "category", "lastUsed"]
     }
   },
   "auth": {
@@ -397,6 +411,14 @@
           "entityName": "AdviceFeedback",
           "schema": { "$ref": "#/backend/entities/AdviceFeedback" },
           "description": "Stores user feedback on AI-generated advice. Access is restricted to the owning user."
+        }
+      },
+      {
+        "path": "/users/{userId}/userCategoryPreferences/{preferenceId}",
+        "definition": {
+          "entityName": "UserCategoryPreference",
+          "schema": { "$ref": "#/backend/entities/UserCategoryPreference" },
+          "description": "Stores a user's learned preference for categorizing a transaction description. Access is restricted to the owning user."
         }
       }
     ],

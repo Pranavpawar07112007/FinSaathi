@@ -32,6 +32,7 @@ import type { Transaction } from '@/app/transactions/page';
 import type { Investment } from '@/app/investments/page';
 import type { Account } from '@/app/accounts/page';
 import { Checkbox } from '../ui/checkbox';
+import { learnFromCategorization } from '@/ai/flows/learn-from-categorization-flow';
 
 const transactionSchema = z
   .object({
@@ -128,6 +129,16 @@ export function EditTransactionDialog({
     try {
       const batch = writeBatch(firestore);
       const transactionRef = doc(firestore, 'users', user.uid, 'transactions', transaction.id);
+
+      // Teach the AI if the category was changed by the user.
+      if (data.category && data.category !== transaction.category) {
+          await learnFromCategorization({
+              userId: user.uid,
+              description: data.description,
+              category: data.category,
+          });
+      }
+
 
       // --- 1. Revert the old transaction's financial impact ---
       const oldAmount = Math.abs(transaction.amount);

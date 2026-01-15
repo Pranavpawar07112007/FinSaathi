@@ -19,3 +19,4 @@ import '@/ai/flows/import-from-image-flow.ts';
 import '@/ai/flows/import-from-pdf-flow.ts';
 import '@/ai/flows/award-achievement-flow.ts';
 import '@/ai/flows/generate-negotiation-script-flow.ts';
+import '@/ai/flows/learn-from-categorization-flow.ts';

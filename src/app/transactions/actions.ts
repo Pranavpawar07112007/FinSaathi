@@ -22,6 +22,7 @@ import { z } from 'zod';
 
 const categorizationSchema = z.object({
   description: z.string().min(1, 'Description is required'),
+  userId: z.string().min(1, 'User ID is required'),
 });
 
 /**
@@ -29,17 +30,19 @@ const categorizationSchema = z.object({
  * This action does NOT write to Firestore. It only returns the category.
  */
 export async function getTransactionCategoryAction(
-  description: string
+  description: string,
+  userId: string,
 ): Promise<{ category?: string; error?: string }> {
-  const validatedFields = categorizationSchema.safeParse({ description });
+  const validatedFields = categorizationSchema.safeParse({ description, userId });
 
   if (!validatedFields.success) {
-    return { error: 'Invalid description provided.' };
+    return { error: 'Invalid description or user ID provided.' };
   }
 
   try {
     const categorizationInput: CategorizeTransactionInput = {
       description,
+      userId,
     };
     const result = await categorizeTransaction(categorizationInput);
     return { category: result.category };

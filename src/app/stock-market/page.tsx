@@ -10,14 +10,16 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { getMarketNews, type MarketNewsItem } from '@/services/finnhub';
-import { ExternalLink, Newspaper } from 'lucide-react';
+import { ExternalLink, Newspaper, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import TradingViewWidget from '@/components/trading-view-widget';
 import { useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
 
 function StockMarketPage() {
   const [marketNews, setMarketNews] = useState<MarketNewsItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [visibleNewsCount, setVisibleNewsCount] = useState(4);
 
   useEffect(() => {
     async function fetchNews() {
@@ -28,6 +30,10 @@ function StockMarketPage() {
     }
     fetchNews();
   }, []);
+
+  const handleLoadMore = () => {
+    setVisibleNewsCount(prevCount => prevCount + 2);
+  };
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
@@ -48,8 +54,8 @@ function StockMarketPage() {
 
           <h2 className="text-2xl font-bold tracking-tight mb-4">Market News</h2>
           {isLoading ? (
-             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {Array.from({ length: 6 }).map((_, i) => (
+             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+                {Array.from({ length: 4 }).map((_, i) => (
                     <Card key={i} className="flex flex-col">
                         <div className="relative h-40 w-full bg-muted rounded-t-lg"></div>
                         <CardHeader>
@@ -67,8 +73,8 @@ function StockMarketPage() {
                 ))}
              </div>
           ) : marketNews && marketNews.length > 0 ? (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {marketNews.slice(0, 12).map((newsItem: MarketNewsItem) => (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+              {marketNews.slice(0, visibleNewsCount).map((newsItem: MarketNewsItem) => (
                 <Card key={newsItem.id} className="flex flex-col">
                   {newsItem.image ? (
                     <div className="relative h-40 w-full">
@@ -115,6 +121,15 @@ function StockMarketPage() {
           ) : (
             <div className="py-16 text-center text-muted-foreground">
               <p>Could not load market news at this time.</p>
+            </div>
+          )}
+          
+          {!isLoading && visibleNewsCount < marketNews.length && (
+            <div className="mt-8 flex justify-center">
+              <Button onClick={handleLoadMore}>
+                <Loader2 className="mr-2 h-4 w-4" />
+                Load More News
+              </Button>
             </div>
           )}
         </CardContent>

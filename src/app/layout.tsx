@@ -44,9 +44,11 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <FirebaseClientProvider>
-            <AppLayout>
-              <PageTransition>{children}</PageTransition>
-            </AppLayout>
+            <div className="flex min-h-screen w-full flex-col">
+              <AppLayout>
+                <PageTransition>{children}</PageTransition>
+              </AppLayout>
+            </div>
             <Toaster />
           </FirebaseClientProvider>
         </ThemeProvider>

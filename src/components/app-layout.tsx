@@ -1,3 +1,4 @@
+
 'use client';
 
 import { usePathname } from 'next/navigation';
@@ -13,9 +14,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
     pathname !== '/';
 
   return (
-    <div className="flex min-h-screen w-full flex-col">
+    <>
       {showHeader && <Header />}
-      {children}
-    </div>
+      <div className="flex-1">{children}</div>
+    </>
   );
 }

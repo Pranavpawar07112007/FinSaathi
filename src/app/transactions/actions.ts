@@ -13,10 +13,12 @@ import {
 import {
   importFromImage,
   type ImportFromImageInput,
+  type ImportFromImageOutput,
 } from '@/ai/flows/import-from-image-flow';
 import { 
     importFromPdf,
     type ImportFromPdfInput,
+    type ImportFromPdfOutput,
 } from '@/ai/flows/import-from-pdf-flow';
 import { z } from 'zod';
 
@@ -82,7 +84,7 @@ export async function importTransactionsAction(
  */
 export async function importFromImageAction(
   imageDataUri: string
-): Promise<{ transactions?: ImportTransactionsOutput['transactions']; error?: string }> {
+): Promise<ImportFromImageOutput | { error: string }> {
   if (!imageDataUri) {
     return { error: 'Image data is empty.' };
   }
@@ -90,7 +92,7 @@ export async function importFromImageAction(
   try {
     const input: ImportFromImageInput = { imageDataUri };
     const result = await importFromImage(input);
-    return { transactions: result.transactions };
+    return result;
   } catch (error) {
     console.error('AI image parsing failed:', error);
     return { error: 'The AI failed to parse the image. Please try again with a clearer screenshot.' };
@@ -102,7 +104,7 @@ export async function importFromImageAction(
  */
 export async function importFromPdfAction(
   pdfDataUri: string
-): Promise<{ transactions?: ImportTransactionsOutput['transactions']; error?: string }> {
+): Promise<ImportFromPdfOutput | { error: string }> {
   if (!pdfDataUri) {
     return { error: 'PDF data is empty.' };
   }
@@ -110,7 +112,7 @@ export async function importFromPdfAction(
   try {
     const input: ImportFromPdfInput = { pdfDataUri };
     const result = await importFromPdf(input);
-    return { transactions: result.transactions };
+    return result;
   } catch (error) {
     console.error('AI PDF parsing failed:', error);
     return { error: 'The AI failed to parse the PDF file. Please try again with a clearer document.' };

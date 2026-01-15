@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState, useRef, useMemo } from 'react';
+import { useState, useRef, useMemo, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -28,7 +29,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { ScrollArea } from '../ui/scroll-area';
-import { collection, writeBatch, doc, query, orderBy, increment } from 'firebase/firestore';
+import { collection, writeBatch, doc, query, orderBy, increment, addDoc } from 'firebase/firestore';
 import type { Transaction } from '@/app/transactions/page';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Image from 'next/image';
@@ -75,6 +76,7 @@ export function ImportTransactionsDialog({
   const [duplicates, setDuplicates] = useState<ParsedTransaction[]>([]);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [transactionToEdit, setTransactionToEdit] = useState<{ transaction: ParsedTransaction, index: number } | null>(null);
+  const [detectedAccountName, setDetectedAccountName] = useState<string | null>(null);
 
 
   const { user } = useUser();
@@ -98,6 +100,19 @@ export function ImportTransactionsDialog({
       // Use Math.abs on the amount to ensure positive and negative values match
       return new Set(existingTransactions.map(t => `${t.date}-${Math.abs(t.amount)}-${t.description}`));
   }, [existingTransactions]);
+
+  useEffect(() => {
+    if (detectedAccountName && accounts) {
+        // Try to find a matching account from the detected name
+        const matchedAccount = accounts.find(acc => 
+            acc.name.toLowerCase().includes(detectedAccountName.toLowerCase()) ||
+            detectedAccountName.toLowerCase().includes(acc.name.toLowerCase())
+        );
+        if (matchedAccount) {
+            setSelectedAccountId(matchedAccount.id!);
+        }
+    }
+  }, [detectedAccountName, accounts]);
 
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, type: ImportSource) => {
@@ -148,44 +163,38 @@ export function ImportTransactionsDialog({
     setError(null);
     try {
       let result;
-      const reader = new FileReader();
       
-      result = await new Promise((resolve, reject) => {
-        reader.onloadend = async () => {
-            try {
-                const dataUri = reader.result as string;
-                if (source === 'csv') {
-                    const fileContent = await file.text();
-                    const res = await importTransactionsAction(fileContent);
-                    resolve(res);
-                } else if (source === 'image') {
-                    const res = await importFromImageAction(dataUri);
-                    resolve(res);
-                } else if (source === 'pdf') {
-                    const res = await importFromPdfAction(dataUri);
-                    resolve(res);
-                }
-            } catch (e) {
-                reject(e);
-            }
-        };
-        reader.onerror = reject;
-        
-        if (source === 'csv') {
-            reader.readAsText(file);
-        } else {
-            reader.readAsDataURL(file);
-        }
-      });
+      if (source === 'csv') {
+          const fileContent = await file.text();
+          result = await importTransactionsAction(fileContent);
+      } else {
+          const dataUri = await new Promise<string>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = () => resolve(reader.result as string);
+              reader.onerror = reject;
+              reader.readAsDataURL(file);
+          });
+          if (source === 'image') {
+              result = await importFromImageAction(dataUri);
+          } else { // pdf
+              result = await importFromPdfAction(dataUri);
+          }
+      }
       
-      if ((result as any).error || !(result as any).transactions) {
-        throw new Error((result as any).error || 'Failed to parse transactions.');
+      if ('error' in result) {
+        throw new Error(result.error || 'Failed to parse transactions.');
+      }
+      
+      const { transactions, accountName } = result;
+
+      if (accountName) {
+        setDetectedAccountName(accountName);
       }
 
       // Check for duplicates before showing review step
       const uniqueTransactions: ParsedTransaction[] = [];
       const foundDuplicates: ParsedTransaction[] = [];
-      (result as any).transactions.forEach((t: ParsedTransaction) => {
+      transactions.forEach((t: ParsedTransaction) => {
           // Use Math.abs on the amount to ensure positive and negative values match
           const signature = `${t.date}-${Math.abs(t.amount)}-${t.description}`;
           if (existingTransactionSignatures.has(signature)) {
@@ -210,7 +219,7 @@ export function ImportTransactionsDialog({
       setError('No new transactions to import or user not logged in.');
       return;
     }
-     if (!selectedAccountId) {
+     if (!selectedAccountId && !detectedAccountName) {
         setError('Please select an account to assign these transactions to.');
         return;
     }
@@ -218,8 +227,25 @@ export function ImportTransactionsDialog({
     setError(null);
     try {
       const batch = writeBatch(firestore);
-      const transactionsRef = collection(firestore, `users/${user.uid}/transactions`);
+      let finalAccountId = selectedAccountId;
       let totalImpact = 0;
+
+      // Auto-create account if one was detected but not selected (doesn't exist)
+      if (!finalAccountId && detectedAccountName) {
+          const newAccountRef = doc(collection(firestore, 'users', user.uid, 'accounts'));
+          batch.set(newAccountRef, {
+              userId: user.uid,
+              name: detectedAccountName,
+              balance: 0, // Initial balance, will be updated
+          });
+          finalAccountId = newAccountRef.id;
+      }
+      
+      if (!finalAccountId) {
+          throw new Error("Could not determine an account for import.");
+      }
+
+      const transactionsRef = collection(firestore, `users/${user.uid}/transactions`);
 
       parsedTransactions.forEach(transaction => {
         const docRef = doc(transactionsRef);
@@ -235,7 +261,7 @@ export function ImportTransactionsDialog({
           category: transaction.category,
           type: type,
           source: source,
-          accountId: selectedAccountId,
+          accountId: finalAccountId,
           bankTransactionId: transaction.bankTransactionId || null,
           isTaxDeductible: false,
           fromAccountId: null,
@@ -249,7 +275,7 @@ export function ImportTransactionsDialog({
       
       // Add the account balance update to the batch
       if (totalImpact !== 0) {
-        const accountRef = doc(firestore, 'users', user.uid, 'accounts', selectedAccountId);
+        const accountRef = doc(firestore, 'users', user.uid, 'accounts', finalAccountId);
         batch.update(accountRef, { balance: increment(totalImpact) });
       }
 
@@ -292,6 +318,7 @@ export function ImportTransactionsDialog({
     setImagePreview(null);
     setSelectedAccountId('');
     setDuplicates([]);
+    setDetectedAccountName(null);
     setIsOpen(false);
   };
   
@@ -466,6 +493,11 @@ export function ImportTransactionsDialog({
                         )}
                     </SelectContent>
                 </Select>
+                 {detectedAccountName && !accounts?.some(acc => acc.id === selectedAccountId) && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                        AI detected account: "{detectedAccountName}". If this is a new account, it will be created automatically.
+                    </p>
+                )}
             </div>
         </div>
 

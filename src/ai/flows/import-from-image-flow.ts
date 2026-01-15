@@ -41,6 +41,8 @@ export type ImportFromImageInput = z.infer<
 >;
 
 const ImportFromImageOutputSchema = z.object({
+  accountName: z.string().optional().describe("The name of the bank or account holder if visible (e.g., 'HDFC Bank', 'Savings A/C')."),
+  accountNumber: z.string().optional().describe("The last 4 digits of the account number, if visible."),
   transactions: z.array(TransactionSchema),
 });
 export type ImportFromImageOutput = z.infer<
@@ -60,18 +62,19 @@ const prompt = ai.definePrompt({
   prompt: `You are an expert at extracting transaction details from screenshots of Indian UPI payment apps (like Google Pay, PhonePe, Paytm).
 
   **Instructions:**
-  1.  **Analyze the Image**: Carefully examine the screenshot to identify all individual transactions.
-  2.  **Extract Details**: For each transaction, extract the date, the description, the amount, and any visible transaction ID/reference number.
-  3.  **Clean Descriptions**: From the raw transaction description, extract the primary merchant or person's name. Remove extraneous details like "UPI/DR/", transaction IDs, bank codes (e.g., "YESB"), or other machine-readable codes. For example, 'TRANSFER TO 4897696162090 - UPI/DR/535436851766/VANDANA /YESB/q045675823/UPI' should become 'VANDANA'.
-  4.  **Determine Amount**: Payments made (debits) should be **negative** numbers. Payments received (credits) should be **positive** numbers.
-  5.  **Parse Dates**: Convert all dates to 'YYYY-MM-DD' format. If the year is not specified, assume it's the most recent possible year relative to today.
-  6.  **Categorize**: Assign a logical category like 'Food', 'Shopping', or 'Salary' based on the cleaned description.
-  7.  **Handle Non-Transactions**: Ignore any text or elements that are not specific transactions. If no transactions are found, return an empty array.
+  1.  **Find Account Info**: First, look for the account name or bank name (e.g., "HDFC Bank", "ICICI A/C") and the last 4 digits of the account number if they are visible on the screen.
+  2.  **Analyze the Image**: Carefully examine the screenshot to identify all individual transactions.
+  3.  **Extract Details**: For each transaction, extract the date, the description, the amount, and any visible transaction ID/reference number.
+  4.  **Clean Descriptions**: From the raw transaction description, extract the primary merchant or person's name. Remove extraneous details like "UPI/DR/", transaction IDs, bank codes (e.g., "YESB"), or other machine-readable codes. For example, 'TRANSFER TO 4897696162090 - UPI/DR/535436851766/VANDANA /YESB/q045675823/UPI' should become 'VANDANA'.
+  5.  **Determine Amount**: Payments made (debits) should be **negative** numbers. Payments received (credits) should be **positive** numbers.
+  6.  **Parse Dates**: Convert all dates to 'YYYY-MM-DD' format. If the year is not specified, assume it's the most recent possible year relative to today.
+  7.  **Categorize**: Assign a logical category like 'Food', 'Shopping', or 'Salary' based on the cleaned description.
+  8.  **Handle Non-Transactions**: Ignore any text or elements that are not specific transactions. If no transactions are found, return an empty array.
 
   **Image to Parse:**
   {{media url=imageDataUri}}
 
-  Return the parsed and categorized transactions as a JSON object.
+  Return the parsed account info and categorized transactions as a JSON object.
   `,
 });
 

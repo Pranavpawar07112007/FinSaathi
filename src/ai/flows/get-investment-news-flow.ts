@@ -11,6 +11,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { getMarketNews, type MarketNewsItem } from '@/services/finnhub';
+import { Part, GenerationResponse, Candidate } from '@genkit-ai/google-genai';
 
 const GetInvestmentNewsInputSchema = z.object({
   investmentNames: z
@@ -98,7 +99,26 @@ const getInvestmentNewsFlow = ai.defineFlow(
       return { news: [] };
     }
 
-    const { output } = await prompt(input);
+    const response = await prompt(input);
+    const toolResponsePart = response.candidates[0].message.content.parts.find(
+      (part) => 'toolResponse' in part
+    );
+
+    if (toolResponsePart && 'toolResponse' in toolResponsePart) {
+      const toolResponse = toolResponsePart.toolResponse;
+      if (Array.isArray(toolResponse.parts)) {
+        const output = toolResponse.parts.reduce(
+          (acc: GetInvestmentNewsOutput, part: any) => {
+            if (part?.toolResponse?.name === 'getInvestmentNews' && part?.toolResponse?.output) {
+              acc.news.push(...(part.toolResponse.output as any).news);
+            }
+            return acc;
+          }, { news: [] });
+        return output;
+      }
+    }
+
+    const output = response.output();
     if (!output) {
       // If the AI fails to generate, return an empty array to prevent crashing.
       console.warn("AI failed to generate investment news. Returning empty array.");

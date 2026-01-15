@@ -36,6 +36,7 @@ import { DeleteDebtDialog } from '@/components/debts/delete-debt-dialog';
 import type { WithId } from '@/firebase/firestore/use-collection';
 import { DebtPlanGenerator } from '@/components/debts/debt-plan-generator';
 import { AmortizationScheduleDialog } from '@/components/debts/amortization-schedule-dialog';
+import { AnimatedSection } from '@/components/animated-section';
 
 
 export interface Debt {
@@ -107,111 +108,117 @@ export default function DebtsPage() {
   return (
     <div className="flex min-h-screen w-full flex-col">
       <main className="flex flex-1 flex-col gap-8 p-4 md:gap-8 md:p-8">
-        <Card>
-          <CardHeader className="flex flex-col md:flex-row md:items-start md:justify-between">
-            <div>
-              <CardTitle>Debt Management</CardTitle>
-              <CardDescription>
-                Keep track of your loans and credit card balances.
-              </CardDescription>
-            </div>
-            <Button size="sm" onClick={() => setIsAddOpen(true)}>
-              <PlusCircle className="mr-2" />
-              Add Debt
-            </Button>
-          </CardHeader>
-          <CardContent className="w-full overflow-x-auto">
-            <div className="flex gap-6 pb-4 sm:grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-              {isLoading
-                ? Array.from({ length: 3 }).map((_, i) => (
-                    <Card key={i} className="min-w-[300px] sm:min-w-0">
-                      <CardHeader>
-                        <Skeleton className="h-6 w-3/4" />
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        <Skeleton className="h-8 w-1/2" />
-                        <div className="flex justify-between">
-                          <Skeleton className="h-5 w-20" />
-                          <Skeleton className="h-5 w-20" />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))
-                : debts?.map((debt) => {
-                    const Icon = ICONS[debt.type] || ICONS.Other;
-                    const isLoan = loanTypes.includes(debt.type);
-                    return (
-                      <Card key={debt.id} className="flex flex-col min-w-[300px] sm:min-w-0">
-                        <CardHeader className="pb-4">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <Icon className="size-6 text-muted-foreground" />
-                              <div>
-                                <CardTitle className="text-lg">
-                                  {debt.name}
-                                </CardTitle>
-                                <CardDescription>{debt.type}</CardDescription>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="size-8"
-                                onClick={() => handleEditClick(debt)}
-                              >
-                                <Pencil className="size-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="size-8"
-                                onClick={() => handleDeleteClick(debt)}
-                              >
-                                <Trash2 className="size-4 text-destructive" />
-                              </Button>
-                            </div>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="flex-grow space-y-3">
-                          <div>
-                            <p className="text-sm text-muted-foreground">
-                              Current Balance
-                            </p>
-                            <p className="text-2xl font-bold">
-                              {formatCurrency(debt.currentBalance)}
-                            </p>
-                          </div>
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                            <div className="flex items-center gap-1">
-                              <Percent className="size-4" />
-                              <span>{debt.interestRate}% APR</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                               <span>Min. Payment: {formatCurrency(debt.minimumPayment)}</span>
-                            </div>
-                          </div>
-                          {isLoan && (
-                            <Button variant="outline" className="w-full" onClick={() => handleScheduleClick(debt)}>
-                                <CalendarClock className="mr-2"/>
-                                View Schedule
-                            </Button>
-                          )}
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-              {!isLoading && (!debts || debts.length === 0) && (
-                <div className="col-span-full text-center py-10 text-muted-foreground">
-                  <p>You haven't added any debts yet.</p>
-                  <p>Click "Add Debt" to get started.</p>
+        <AnimatedSection>
+            <Card>
+            <CardHeader className="flex flex-col md:flex-row md:items-start md:justify-between">
+                <div>
+                <CardTitle>Debt Management</CardTitle>
+                <CardDescription>
+                    Keep track of your loans and credit card balances.
+                </CardDescription>
                 </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                <Button size="sm" onClick={() => setIsAddOpen(true)}>
+                <PlusCircle className="mr-2" />
+                Add Debt
+                </Button>
+            </CardHeader>
+            <CardContent className="w-full overflow-x-auto">
+                <div className="flex gap-6 pb-4 sm:grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                {isLoading
+                    ? Array.from({ length: 3 }).map((_, i) => (
+                        <Card key={i} className="min-w-[300px] sm:min-w-0">
+                        <CardHeader>
+                            <Skeleton className="h-6 w-3/4" />
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <Skeleton className="h-8 w-1/2" />
+                            <div className="flex justify-between">
+                            <Skeleton className="h-5 w-20" />
+                            <Skeleton className="h-5 w-20" />
+                            </div>
+                        </CardContent>
+                        </Card>
+                    ))
+                    : debts?.map((debt, index) => {
+                        const Icon = ICONS[debt.type] || ICONS.Other;
+                        const isLoan = loanTypes.includes(debt.type);
+                        return (
+                        <AnimatedSection delay={index * 0.1} key={debt.id}>
+                            <Card className="flex flex-col min-w-[300px] sm:min-w-0 h-full">
+                                <CardHeader className="pb-4">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                    <Icon className="size-6 text-muted-foreground" />
+                                    <div>
+                                        <CardTitle className="text-lg">
+                                        {debt.name}
+                                        </CardTitle>
+                                        <CardDescription>{debt.type}</CardDescription>
+                                    </div>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="size-8"
+                                        onClick={() => handleEditClick(debt)}
+                                    >
+                                        <Pencil className="size-4" />
+                                    </Button>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="size-8"
+                                        onClick={() => handleDeleteClick(debt)}
+                                    >
+                                        <Trash2 className="size-4 text-destructive" />
+                                    </Button>
+                                    </div>
+                                </div>
+                                </CardHeader>
+                                <CardContent className="flex-grow space-y-3">
+                                <div>
+                                    <p className="text-sm text-muted-foreground">
+                                    Current Balance
+                                    </p>
+                                    <p className="text-2xl font-bold">
+                                    {formatCurrency(debt.currentBalance)}
+                                    </p>
+                                </div>
+                                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                    <div className="flex items-center gap-1">
+                                    <Percent className="size-4" />
+                                    <span>{debt.interestRate}% APR</span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                    <span>Min. Payment: {formatCurrency(debt.minimumPayment)}</span>
+                                    </div>
+                                </div>
+                                {isLoan && (
+                                    <Button variant="outline" className="w-full" onClick={() => handleScheduleClick(debt)}>
+                                        <CalendarClock className="mr-2"/>
+                                        View Schedule
+                                    </Button>
+                                )}
+                                </CardContent>
+                            </Card>
+                        </AnimatedSection>
+                        );
+                    })}
+                {!isLoading && (!debts || debts.length === 0) && (
+                    <div className="col-span-full text-center py-10 text-muted-foreground">
+                    <p>You haven't added any debts yet.</p>
+                    <p>Click "Add Debt" to get started.</p>
+                    </div>
+                )}
+                </div>
+            </CardContent>
+            </Card>
+        </AnimatedSection>
 
-        <DebtPlanGenerator debts={debts || []} isLoading={isLoading} />
+        <AnimatedSection delay={0.3}>
+            <DebtPlanGenerator debts={debts || []} isLoading={isLoading} />
+        </AnimatedSection>
 
       </main>
       <AddDebtDialog isOpen={isAddOpen} setIsOpen={setIsAddOpen} />

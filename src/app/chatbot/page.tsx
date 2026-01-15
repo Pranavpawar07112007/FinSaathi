@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useActionState, useEffect, useState, useRef, useMemo } from 'react';
@@ -31,6 +32,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { AnimatedSection } from '@/components/animated-section';
 
 
 const initialState = {
@@ -268,6 +270,7 @@ export default function ChatbotPage() {
   return (
     <div className="flex min-h-screen w-full flex-col">
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
+        <AnimatedSection>
         <Card className="flex flex-col h-[85vh]">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -367,6 +370,7 @@ export default function ChatbotPage() {
             </form>
           </CardFooter>
         </Card>
+        </AnimatedSection>
       </main>
     </div>
   );

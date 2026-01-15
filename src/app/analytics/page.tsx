@@ -18,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { FilterX } from 'lucide-react';
 import { getMonth, getYear, parseISO } from 'date-fns';
+import { AnimatedSection } from '@/components/animated-section';
 
 const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -128,84 +129,92 @@ export default function AnalyticsPage() {
   return (
     <div className="flex min-h-screen w-full flex-col">
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
-        <Card>
-            <CardHeader>
-                <CardTitle>Financial Analytics</CardTitle>
-                <CardDescription>
-                    Dive deep into your financial data. Use the filters below to analyze specific periods.
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-                    <Select value={filterYear} onValueChange={setFilterYear}>
-                        <SelectTrigger><SelectValue placeholder="Year" /></SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">All Years</SelectItem>
-                            {availableYears.map(year => <SelectItem key={year} value={year}>{year}</SelectItem>)}
-                        </SelectContent>
-                    </Select>
-                    <Select value={filterMonth} onValueChange={setFilterMonth}>
-                        <SelectTrigger><SelectValue placeholder="Month" /></SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">All Months</SelectItem>
-                            {MONTHS.map((month, index) => <SelectItem key={month} value={index.toString()}>{month}</SelectItem>)}
-                        </SelectContent>
-                    </Select>
-                     <Select value={filterAccount} onValueChange={setFilterAccount}>
-                        <SelectTrigger><SelectValue placeholder="Account" /></SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">All Accounts</SelectItem>
-                            {accounts?.map(acc => <SelectItem key={acc.id} value={acc.id}>{acc.name}</SelectItem>)}
-                        </SelectContent>
-                    </Select>
-                    <Button variant="outline" onClick={clearFilters}>
-                        <FilterX className="mr-2"/>
-                        Clear Filters
-                    </Button>
-                </div>
+        <AnimatedSection>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Financial Analytics</CardTitle>
+                    <CardDescription>
+                        Dive deep into your financial data. Use the filters below to analyze specific periods.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                        <Select value={filterYear} onValueChange={setFilterYear}>
+                            <SelectTrigger><SelectValue placeholder="Year" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Years</SelectItem>
+                                {availableYears.map(year => <SelectItem key={year} value={year}>{year}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                        <Select value={filterMonth} onValueChange={setFilterMonth}>
+                            <SelectTrigger><SelectValue placeholder="Month" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Months</SelectItem>
+                                {MONTHS.map((month, index) => <SelectItem key={month} value={index.toString()}>{month}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                        <Select value={filterAccount} onValueChange={setFilterAccount}>
+                            <SelectTrigger><SelectValue placeholder="Account" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Accounts</SelectItem>
+                                {accounts?.map(acc => <SelectItem key={acc.id} value={acc.id}>{acc.name}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                        <Button variant="outline" onClick={clearFilters}>
+                            <FilterX className="mr-2"/>
+                            Clear Filters
+                        </Button>
+                    </div>
 
-                <div className="grid gap-8">
-                    <Card>
-                        <Tabs defaultValue="expense">
-                            <CardHeader>
-                                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                                    <div>
-                                        <CardTitle>Category Breakdown</CardTitle>
-                                        <CardDescription>
-                                        See where your money is coming from and where it's going for the selected period.
-                                        </CardDescription>
-                                    </div>
-                                    <TabsList className="grid w-full md:w-auto grid-cols-2">
-                                        <TabsTrigger value="expense">Expenses</TabsTrigger>
-                                        <TabsTrigger value="income">Income</TabsTrigger>
-                                    </TabsList>
-                                </div>
-                            </CardHeader>
-                            <CardContent>
-                                <TabsContent value="expense">
-                                    <CategoryBreakdownChart data={analyticsData?.expenseByCategory || []} type="expense" />
-                                </TabsContent>
-                                <TabsContent value="income">
-                                    <CategoryBreakdownChart data={analyticsData?.incomeByCategory || []} type="income" />
-                                </TabsContent>
-                            </CardContent>
-                        </Tabs>
-                    </Card>
+                    <div className="grid gap-8">
+                        <AnimatedSection delay={0.1}>
+                            <Card>
+                                <Tabs defaultValue="expense">
+                                    <CardHeader>
+                                        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                                            <div>
+                                                <CardTitle>Category Breakdown</CardTitle>
+                                                <CardDescription>
+                                                See where your money is coming from and where it's going for the selected period.
+                                                </CardDescription>
+                                            </div>
+                                            <TabsList className="grid w-full md:w-auto grid-cols-2">
+                                                <TabsTrigger value="expense">Expenses</TabsTrigger>
+                                                <TabsTrigger value="income">Income</TabsTrigger>
+                                            </TabsList>
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <TabsContent value="expense">
+                                            <CategoryBreakdownChart data={analyticsData?.expenseByCategory || []} type="expense" />
+                                        </TabsContent>
+                                        <TabsContent value="income">
+                                            <CategoryBreakdownChart data={analyticsData?.incomeByCategory || []} type="income" />
+                                        </TabsContent>
+                                    </CardContent>
+                                </Tabs>
+                            </Card>
+                        </AnimatedSection>
 
-                    <MonthlyOverviewChart data={analyticsData?.monthlyOverview || []} />
-                    
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Savings Goals Progress</CardTitle>
-                            <CardDescription>Track how close you are to reaching your financial goals. (Not affected by filters)</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <GoalProgressChart data={goals || []} isLoading={isLoadingGoals} />
-                        </CardContent>
-                    </Card>
-                </div>
-            </CardContent>
-        </Card>
+                        <AnimatedSection delay={0.2}>
+                            <MonthlyOverviewChart data={analyticsData?.monthlyOverview || []} />
+                        </AnimatedSection>
+                        
+                        <AnimatedSection delay={0.3}>
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Savings Goals Progress</CardTitle>
+                                    <CardDescription>Track how close you are to reaching your financial goals. (Not affected by filters)</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <GoalProgressChart data={goals || []} isLoading={isLoadingGoals} />
+                                </CardContent>
+                            </Card>
+                        </AnimatedSection>
+                    </div>
+                </CardContent>
+            </Card>
+        </AnimatedSection>
       </main>
     </div>
   );

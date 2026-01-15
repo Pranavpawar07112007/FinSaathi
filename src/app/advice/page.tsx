@@ -27,6 +27,7 @@ import type { Investment } from '@/app/investments/page';
 import type { Debt } from '@/app/debts/page';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { AnimatedSection } from '@/components/animated-section';
 
 const initialState = {
   message: null,
@@ -185,150 +186,153 @@ export default function AdvicePage() {
     <div className="flex min-h-screen w-full flex-col">
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
         <div className="grid gap-8 md:grid-cols-2">
-          <Card>
-            <form ref={formRef} action={formAction}>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Bot /> Get Financial Advice
-                </CardTitle>
-                <CardDescription>
-                  Choose your advice type, describe your goals, and select your risk tolerance.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-2">
-                  <Label>Advice Type</Label>
-                  <RadioGroup
-                    name="adviceType"
-                    value={adviceType}
-                    onValueChange={(value: AdviceType) => setAdviceType(value)}
-                    className="flex gap-4"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="personalized" id="personalized" />
-                      <Label htmlFor="personalized">Personalized</Label>
+          <AnimatedSection>
+            <Card>
+                <form ref={formRef} action={formAction}>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                    <Bot /> Get Financial Advice
+                    </CardTitle>
+                    <CardDescription>
+                    Choose your advice type, describe your goals, and select your risk tolerance.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    <div className="space-y-2">
+                    <Label>Advice Type</Label>
+                    <RadioGroup
+                        name="adviceType"
+                        value={adviceType}
+                        onValueChange={(value: AdviceType) => setAdviceType(value)}
+                        className="flex gap-4"
+                    >
+                        <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="personalized" id="personalized" />
+                        <Label htmlFor="personalized">Personalized</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="general" id="general" />
+                        <Label htmlFor="general">General</Label>
+                        </div>
+                    </RadioGroup>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="general" id="general" />
-                      <Label htmlFor="general">General</Label>
+                    <div className="space-y-2">
+                    <Label>Risk Tolerance</Label>
+                    <RadioGroup
+                        name="riskTolerance"
+                        defaultValue="medium"
+                        className="flex gap-4"
+                    >
+                        <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="low" id="low" />
+                        <Label htmlFor="low">Low</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="medium" id="medium" />
+                        <Label htmlFor="medium">Medium</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="high" id="high" />
+                        <Label htmlFor="high">High</Label>
+                        </div>
+                    </RadioGroup>
                     </div>
-                  </RadioGroup>
-                </div>
-                <div className="space-y-2">
-                  <Label>Risk Tolerance</Label>
-                  <RadioGroup
-                    name="riskTolerance"
-                    defaultValue="medium"
-                    className="flex gap-4"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="low" id="low" />
-                      <Label htmlFor="low">Low</Label>
+                    <div className="space-y-2">
+                    <Label htmlFor="financial-goals">Financial Goals</Label>
+                    <Textarea
+                        id="financial-goals"
+                        name="financialGoals"
+                        placeholder="e.g., 'I want to save for a down payment on a house in 5 years.' or 'How can I best invest ₹50,000 for long-term growth?'"
+                        rows={5}
+                        required
+                    />
+                    {state.issues && (
+                        <p className="text-sm text-destructive">{state.issues.join(', ')}</p>
+                    )}
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="medium" id="medium" />
-                      <Label htmlFor="medium">Medium</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="high" id="high" />
-                      <Label htmlFor="high">High</Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="financial-goals">Financial Goals</Label>
-                  <Textarea
-                    id="financial-goals"
-                    name="financialGoals"
-                    placeholder="e.g., 'I want to save for a down payment on a house in 5 years.' or 'How can I best invest ₹50,000 for long-term growth?'"
-                    rows={5}
-                    required
-                  />
-                  {state.issues && (
-                    <p className="text-sm text-destructive">{state.issues.join(', ')}</p>
-                  )}
-                </div>
-                 <input type="hidden" name="transactionHistory" value={adviceType === 'personalized' ? JSON.stringify(transactionSummary || []) : ''} />
-                 <input type="hidden" name="budgets" value={adviceType === 'personalized' ? JSON.stringify(budgetSummary || []) : ''} />
-                 <input type="hidden" name="goals" value={adviceType === 'personalized' ? JSON.stringify(goals || []) : ''} />
-                 <input type="hidden" name="accounts" value={adviceType === 'personalized' ? JSON.stringify(accounts || []) : ''} />
-                 <input type="hidden" name="investments" value={adviceType === 'personalized' ? JSON.stringify(investments || []) : ''} />
-                 <input type="hidden" name="debts" value={adviceType === 'personalized' ? JSON.stringify(debts || []) : ''} />
-                 <input type="hidden" name="achievements" value={adviceType === 'personalized' ? JSON.stringify(achievementsSummary) : ''} />
-                 <input type="hidden" name="feedbackHistory" value={adviceType === 'personalized' ? JSON.stringify(feedbackHistory || []) : ''} />
-              </CardContent>
-              <CardFooter>
-                <Button type="submit" disabled={isSubmitting || (adviceType === 'personalized' && isDataLoading)}>
-                  {isSubmitting ? <Loader2 className="mr-2 animate-spin" /> : <Sparkles className="mr-2" />}
-                  {isSubmitting ? 'Generating...' : 'Generate Advice'}
-                </Button>
-              </CardFooter>
-            </form>
-          </Card>
-
-          <Card className="flex flex-col">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Sparkles className="text-primary" />
-                Your Advice
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex-grow">
-              {isSubmitting && (
-                  <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
-                    <Loader2 className="size-12 mb-4 animate-spin" />
-                    <p>FinSaathi is analyzing your data...</p>
-                 </div>
-              )}
-              {!isSubmitting && state.message === 'error' && (
-                <div className="flex flex-col items-center justify-center h-full text-center text-destructive bg-destructive/10 rounded-lg p-4">
-                  <AlertTriangle className="size-8 mb-2" />
-                  <p className="font-semibold">Oops! Something went wrong.</p>
-                  <p className="text-sm mb-4">{state.advice}</p>
-                   <Button variant="destructive" onClick={handleSubmitForm}>
-                        <RefreshCw className="mr-2" />
-                        Try Again
-                   </Button>
-                </div>
-              )}
-              {!isSubmitting && state.message === 'success' && state.advice && state.adviceId && (
-                <div className="prose prose-sm max-w-none text-foreground whitespace-pre-wrap">
-                  {state.advice}
-                </div>
-              )}
-              {!isSubmitting && !state.advice && !state.message && (
-                 <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
-                    <Bot className="size-12 mb-4" />
-                    <p>Your financial advice will appear here.</p>
-                 </div>
-              )}
-            </CardContent>
-             {state.adviceId && !isSubmitting && state.message === 'success' && (
-                <CardFooter className="border-t pt-4 flex-col items-start gap-3">
-                    <p className="text-sm font-medium text-muted-foreground">Was this advice helpful?</p>
-                    <div className="flex gap-2">
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleFeedback(state.adviceId!, 'good')}
-                            disabled={feedbackStatus[state.adviceId!] === 'good'}
-                            className={cn(feedbackStatus[state.adviceId!] === 'good' && 'bg-green-100 dark:bg-green-900 border-green-500 text-green-700 dark:text-green-300')}
-                        >
-                            <ThumbsUp className="mr-2"/> Good Advice
-                        </Button>
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleFeedback(state.adviceId!, 'bad')}
-                            disabled={feedbackStatus[state.adviceId!] === 'bad'}
-                             className={cn(feedbackStatus[state.adviceId!] === 'bad' && 'bg-red-100 dark:bg-red-900 border-red-500 text-red-700 dark:text-red-300')}
-                        >
-                            <ThumbsDown className="mr-2"/> Bad Advice
-                        </Button>
-                    </div>
+                    <input type="hidden" name="transactionHistory" value={adviceType === 'personalized' ? JSON.stringify(transactionSummary || []) : ''} />
+                    <input type="hidden" name="budgets" value={adviceType === 'personalized' ? JSON.stringify(budgetSummary || []) : ''} />
+                    <input type="hidden" name="goals" value={adviceType === 'personalized' ? JSON.stringify(goals || []) : ''} />
+                    <input type="hidden" name="accounts" value={adviceType === 'personalized' ? JSON.stringify(accounts || []) : ''} />
+                    <input type="hidden" name="investments" value={adviceType === 'personalized' ? JSON.stringify(investments || []) : ''} />
+                    <input type="hidden" name="debts" value={adviceType === 'personalized' ? JSON.stringify(debts || []) : ''} />
+                    <input type="hidden" name="achievements" value={adviceType === 'personalized' ? JSON.stringify(achievementsSummary) : ''} />
+                    <input type="hidden" name="feedbackHistory" value={adviceType === 'personalized' ? JSON.stringify(feedbackHistory || []) : ''} />
+                </CardContent>
+                <CardFooter>
+                    <Button type="submit" disabled={isSubmitting || (adviceType === 'personalized' && isDataLoading)}>
+                    {isSubmitting ? <Loader2 className="mr-2 animate-spin" /> : <Sparkles className="mr-2" />}
+                    {isSubmitting ? 'Generating...' : 'Generate Advice'}
+                    </Button>
                 </CardFooter>
-            )}
-          </Card>
+                </form>
+            </Card>
+          </AnimatedSection>
+          <AnimatedSection delay={0.2}>
+            <Card className="flex flex-col h-full">
+                <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                    <Sparkles className="text-primary" />
+                    Your Advice
+                </CardTitle>
+                </CardHeader>
+                <CardContent className="flex-grow">
+                {isSubmitting && (
+                    <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
+                        <Loader2 className="size-12 mb-4 animate-spin" />
+                        <p>FinSaathi is analyzing your data...</p>
+                    </div>
+                )}
+                {!isSubmitting && state.message === 'error' && (
+                    <div className="flex flex-col items-center justify-center h-full text-center text-destructive bg-destructive/10 rounded-lg p-4">
+                    <AlertTriangle className="size-8 mb-2" />
+                    <p className="font-semibold">Oops! Something went wrong.</p>
+                    <p className="text-sm mb-4">{state.advice}</p>
+                    <Button variant="destructive" onClick={handleSubmitForm}>
+                            <RefreshCw className="mr-2" />
+                            Try Again
+                    </Button>
+                    </div>
+                )}
+                {!isSubmitting && state.message === 'success' && state.advice && state.adviceId && (
+                    <div className="prose prose-sm max-w-none text-foreground whitespace-pre-wrap">
+                    {state.advice}
+                    </div>
+                )}
+                {!isSubmitting && !state.advice && !state.message && (
+                    <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
+                        <Bot className="size-12 mb-4" />
+                        <p>Your financial advice will appear here.</p>
+                    </div>
+                )}
+                </CardContent>
+                {state.adviceId && !isSubmitting && state.message === 'success' && (
+                    <CardFooter className="border-t pt-4 flex-col items-start gap-3">
+                        <p className="text-sm font-medium text-muted-foreground">Was this advice helpful?</p>
+                        <div className="flex gap-2">
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleFeedback(state.adviceId!, 'good')}
+                                disabled={feedbackStatus[state.adviceId!] === 'good'}
+                                className={cn(feedbackStatus[state.adviceId!] === 'good' && 'bg-green-100 dark:bg-green-900 border-green-500 text-green-700 dark:text-green-300')}
+                            >
+                                <ThumbsUp className="mr-2"/> Good Advice
+                            </Button>
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleFeedback(state.adviceId!, 'bad')}
+                                disabled={feedbackStatus[state.adviceId!] === 'bad'}
+                                className={cn(feedbackStatus[state.adviceId!] === 'bad' && 'bg-red-100 dark:bg-red-900 border-red-500 text-red-700 dark:text-red-300')}
+                            >
+                                <ThumbsDown className="mr-2"/> Bad Advice
+                            </Button>
+                        </div>
+                    </CardFooter>
+                )}
+            </Card>
+          </AnimatedSection>
         </div>
       </main>
     </div>

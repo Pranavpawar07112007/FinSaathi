@@ -47,6 +47,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { ImportTransactionsDialog } from '@/components/transactions/import-transactions-dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DeleteMultipleTransactionsDialog } from '@/components/transactions/delete-multiple-transactions-dialog';
+import { AnimatedSection } from '@/components/animated-section';
 
 
 export interface Transaction {
@@ -272,228 +273,231 @@ export default function TransactionsPage() {
   return (
     <div className="flex min-h-screen w-full flex-col">
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
-        <Card>
-          <CardHeader>
-            <div className="space-y-1.5">
-                <CardTitle>All Transactions</CardTitle>
-                <CardDescription>
-                    A complete history of your financial activities. Filter and view your transactions below.
-                </CardDescription>
-            </div>
-            <div className="flex items-center gap-2 flex-wrap pt-4">
-                  <Button variant="outline" size="sm" onClick={() => setIsImportDialogOpen(true)}>
-                    <Upload />
-                    Import Transactions
-                </Button>
-                <div className="flex items-center gap-1">
-                    <Button variant="outline" size="sm" onClick={downloadCSV}>
-                        <FileDown />
-                        Download as CSV
-                    </Button>
-                    <Popover>
-                        <PopoverTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-9 w-9">
-                                <HelpCircle className="size-4" />
-                            </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-80">
-                            <p className="text-sm">
-                                The CSV file will contain only the transactions that match the currently active filters (Year, Month, Category, and Type).
-                            </p>
-                        </PopoverContent>
-                    </Popover>
+        <AnimatedSection>
+            <Card>
+            <CardHeader>
+                <div className="space-y-1.5">
+                    <CardTitle>All Transactions</CardTitle>
+                    <CardDescription>
+                        A complete history of your financial activities. Filter and view your transactions below.
+                    </CardDescription>
                 </div>
-                {isSelectionMode ? (
-                    <>
-                        <Button variant="destructive" size="sm" onClick={() => setIsDeleteMultipleDialogOpen(true)} disabled={selectedIds.size === 0}>
-                            <Trash2/>
-                            Delete ({selectedIds.size})
+                <div className="flex items-center gap-2 flex-wrap pt-4">
+                    <Button variant="outline" size="sm" onClick={() => setIsImportDialogOpen(true)}>
+                        <Upload />
+                        Import Transactions
+                    </Button>
+                    <div className="flex items-center gap-1">
+                        <Button variant="outline" size="sm" onClick={downloadCSV}>
+                            <FileDown />
+                            Download as CSV
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={toggleSelectionMode}>
-                            Cancel
-                        </Button>
-                    </>
-                ) : (
-                      <>
-                        <Button variant="outline" size="sm" onClick={toggleSelectionMode}>
-                            <Pencil/>
-                            Edit
-                        </Button>
-                        <Button size="sm" onClick={() => setIsAddDialogOpen(true)}>
-                            <PlusCircle />
-                            Add Transaction
-                        </Button>
-                      </>
-                )}
-            </div>
-            <div className="pt-6 grid grid-cols-2 md:grid-cols-6 gap-4">
-                  <Select value={filterYear} onValueChange={setFilterYear}>
-                    <SelectTrigger><SelectValue placeholder="Year" /></SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">All Years</SelectItem>
-                        {availableYears.map(year => <SelectItem key={year} value={year}>{year}</SelectItem>)}
-                    </SelectContent>
-                </Select>
-                  <Select value={filterMonth} onValueChange={setFilterMonth}>
-                    <SelectTrigger><SelectValue placeholder="Month" /></SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">All Months</SelectItem>
-                        {MONTHS.map((month, index) => <SelectItem key={month} value={index.toString()}>{month}</SelectItem>)}
-                    </SelectContent>
-                </Select>
-                  <Select value={filterAccount} onValueChange={setFilterAccount}>
-                    <SelectTrigger><SelectValue placeholder="Account" /></SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">All Accounts</SelectItem>
-                        {accounts?.map(acc => <SelectItem key={acc.id} value={acc.id}>{acc.name}</SelectItem>)}
-                    </SelectContent>
-                </Select>
-                  <Select value={filterCategory} onValueChange={setFilterCategory}>
-                    <SelectTrigger><SelectValue placeholder="Category" /></SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">All Categories</SelectItem>
-                        {availableCategories.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
-                    </SelectContent>
-                </Select>
-                  <Select value={filterType} onValueChange={setFilterType}>
-                    <SelectTrigger><SelectValue placeholder="Type" /></SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">All Types</SelectItem>
-                        <SelectItem value="income">Income</SelectItem>
-                        <SelectItem value="expense">Expense</SelectItem>
-                        <SelectItem value="investment">Investment</SelectItem>
-                        <SelectItem value="transfer">Transfer</SelectItem>
-                    </SelectContent>
-                </Select>
-                <Button variant="outline" className="col-span-2 md:col-span-1" onClick={clearFilters}>
-                    <FilterX className="mr-2"/>
-                    Clear Filters
-                </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="w-full overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                    {isSelectionMode && (
-                        <TableHead className="w-12">
-                            <Checkbox 
-                                onCheckedChange={handleSelectAll}
-                                checked={selectedIds.size > 0 && selectedIds.size === filteredTransactions.length}
-                                aria-label="Select all rows"
-                            />
-                        </TableHead>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-9 w-9">
+                                    <HelpCircle className="size-4" />
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-80">
+                                <p className="text-sm">
+                                    The CSV file will contain only the transactions that match the currently active filters (Year, Month, Category, and Type).
+                                </p>
+                            </PopoverContent>
+                        </Popover>
+                    </div>
+                    {isSelectionMode ? (
+                        <>
+                            <Button variant="destructive" size="sm" onClick={() => setIsDeleteMultipleDialogOpen(true)} disabled={selectedIds.size === 0}>
+                                <Trash2/>
+                                Delete ({selectedIds.size})
+                            </Button>
+                            <Button variant="ghost" size="sm" onClick={toggleSelectionMode}>
+                                Cancel
+                            </Button>
+                        </>
+                    ) : (
+                        <>
+                            <Button variant="outline" size="sm" onClick={toggleSelectionMode}>
+                                <Pencil/>
+                                Edit
+                            </Button>
+                            <Button size="sm" onClick={() => setIsAddDialogOpen(true)}>
+                                <PlusCircle />
+                                Add Transaction
+                            </Button>
+                        </>
                     )}
-                  <TableHead>Description</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
-                  <TableHead className="text-center">Category</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading || isLoadingAccounts ? (
-                  Array.from({ length: 5 }).map((_, i) => (
-                    <TableRow key={i}>
-                      {isSelectionMode && <TableCell><Skeleton className="h-5 w-5" /></TableCell>}
-                      <TableCell>
-                        <Skeleton className="h-5 w-32" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-5 w-24" />
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Skeleton className="h-5 w-16 ml-auto" />
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Skeleton className="h-5 w-20 mx-auto" />
-                      </TableCell>
-                      <TableCell className="text-right">
-                         <div className="flex justify-end gap-2">
-                           <Skeleton className="h-8 w-8" />
-                           <Skeleton className="h-8 w-8" />
-                         </div>
-                      </TableCell>
+                </div>
+                <div className="pt-6 grid grid-cols-2 md:grid-cols-6 gap-4">
+                    <Select value={filterYear} onValueChange={setFilterYear}>
+                        <SelectTrigger><SelectValue placeholder="Year" /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Years</SelectItem>
+                            {availableYears.map(year => <SelectItem key={year} value={year}>{year}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                    <Select value={filterMonth} onValueChange={setFilterMonth}>
+                        <SelectTrigger><SelectValue placeholder="Month" /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Months</SelectItem>
+                            {MONTHS.map((month, index) => <SelectItem key={month} value={index.toString()}>{month}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                    <Select value={filterAccount} onValueChange={setFilterAccount}>
+                        <SelectTrigger><SelectValue placeholder="Account" /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Accounts</SelectItem>
+                            {accounts?.map(acc => <SelectItem key={acc.id} value={acc.id}>{acc.name}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                    <Select value={filterCategory} onValueChange={setFilterCategory}>
+                        <SelectTrigger><SelectValue placeholder="Category" /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Categories</SelectItem>
+                            {availableCategories.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                    <Select value={filterType} onValueChange={setFilterType}>
+                        <SelectTrigger><SelectValue placeholder="Type" /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Types</SelectItem>
+                            <SelectItem value="income">Income</SelectItem>
+                            <SelectItem value="expense">Expense</SelectItem>
+                            <SelectItem value="investment">Investment</SelectItem>
+                            <SelectItem value="transfer">Transfer</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <Button variant="outline" className="col-span-2 md:col-span-1" onClick={clearFilters}>
+                        <FilterX className="mr-2"/>
+                        Clear Filters
+                    </Button>
+                </div>
+            </CardHeader>
+            <CardContent className="w-full overflow-x-auto">
+                <Table>
+                <TableHeader>
+                    <TableRow>
+                        {isSelectionMode && (
+                            <TableHead className="w-12">
+                                <Checkbox 
+                                    onCheckedChange={handleSelectAll}
+                                    checked={selectedIds.size > 0 && selectedIds.size === filteredTransactions.length}
+                                    aria-label="Select all rows"
+                                />
+                            </TableHead>
+                        )}
+                    <TableHead>Description</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead className="text-right">Amount</TableHead>
+                    <TableHead className="text-center">Category</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
-                  ))
-                ) : filteredTransactions.length > 0 ? (
-                  filteredTransactions.map((transaction) => (
-                    <TableRow key={transaction.id} data-state={selectedIds.has(transaction.id) && "selected"}>
-                      {isSelectionMode && (
+                </TableHeader>
+                <TableBody>
+                    {isLoading || isLoadingAccounts ? (
+                    Array.from({ length: 5 }).map((_, i) => (
+                        <TableRow key={i}>
+                        {isSelectionMode && <TableCell><Skeleton className="h-5 w-5" /></TableCell>}
                         <TableCell>
-                            <Checkbox 
-                                checked={selectedIds.has(transaction.id)}
-                                onCheckedChange={(checked) => handleRowSelect(transaction.id, !!checked)}
-                                aria-label={`Select row ${transaction.id}`}
-                            />
+                            <Skeleton className="h-5 w-32" />
+                            <Skeleton className="h-4 w-24 mt-1" />
                         </TableCell>
-                      )}
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                            {transaction.isTaxDeductible && (
-                                <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger>
-                                        <ShieldCheck className="size-4 text-primary" />
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>Potentially tax-deductible</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                                </TooltipProvider>
-                            )}
-                            <div className="font-medium">{transaction.description}</div>
-                        </div>
-                        {renderTransactionDetails(transaction)}
-                      </TableCell>
-                      <TableCell>{transaction.date}</TableCell>
-                      <TableCell
-                        className={`text-right font-medium ${
-                           transaction.type === 'income' ? 'text-green-600' : 
-                           transaction.type === 'expense' ? 'text-destructive' : ''
-                        }`}
-                      >
-                        {Math.abs(transaction.amount).toLocaleString('en-IN', {
-                          style: 'currency',
-                          currency: 'INR',
-                        })}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Badge variant="outline">{transaction.category}</Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                         {!isSelectionMode && (
-                             <div className="flex justify-end gap-2">
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => handleEditClick(transaction)}
-                                >
-                                    <Pencil className="size-4" />
-                                </Button>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => handleDeleteClick(transaction)}
-                                >
-                                    <Trash2 className="size-4 text-destructive" />
-                                </Button>
+                        <TableCell>
+                            <Skeleton className="h-5 w-24" />
+                        </TableCell>
+                        <TableCell className="text-right">
+                            <Skeleton className="h-5 w-16 ml-auto" />
+                        </TableCell>
+                        <TableCell className="text-center">
+                            <Skeleton className="h-5 w-20 mx-auto" />
+                        </TableCell>
+                        <TableCell className="text-right">
+                            <div className="flex justify-end gap-2">
+                            <Skeleton className="h-8 w-8" />
+                            <Skeleton className="h-8 w-8" />
                             </div>
-                         )}
-                      </TableCell>
+                        </TableCell>
+                        </TableRow>
+                    ))
+                    ) : filteredTransactions.length > 0 ? (
+                    filteredTransactions.map((transaction) => (
+                        <TableRow key={transaction.id} data-state={selectedIds.has(transaction.id) && "selected"}>
+                        {isSelectionMode && (
+                            <TableCell>
+                                <Checkbox 
+                                    checked={selectedIds.has(transaction.id)}
+                                    onCheckedChange={(checked) => handleRowSelect(transaction.id, !!checked)}
+                                    aria-label={`Select row ${transaction.id}`}
+                                />
+                            </TableCell>
+                        )}
+                        <TableCell>
+                            <div className="flex items-center gap-2">
+                                {transaction.isTaxDeductible && (
+                                    <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger>
+                                            <ShieldCheck className="size-4 text-primary" />
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>Potentially tax-deductible</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                    </TooltipProvider>
+                                )}
+                                <div className="font-medium">{transaction.description}</div>
+                            </div>
+                            {renderTransactionDetails(transaction)}
+                        </TableCell>
+                        <TableCell>{transaction.date}</TableCell>
+                        <TableCell
+                            className={`text-right font-medium ${
+                            transaction.type === 'income' ? 'text-green-600' : 
+                            transaction.type === 'expense' ? 'text-destructive' : ''
+                            }`}
+                        >
+                            {Math.abs(transaction.amount).toLocaleString('en-IN', {
+                            style: 'currency',
+                            currency: 'INR',
+                            })}
+                        </TableCell>
+                        <TableCell className="text-center">
+                            <Badge variant="outline">{transaction.category}</Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                            {!isSelectionMode && (
+                                <div className="flex justify-end gap-2">
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => handleEditClick(transaction)}
+                                    >
+                                        <Pencil className="size-4" />
+                                    </Button>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => handleDeleteClick(transaction)}
+                                    >
+                                        <Trash2 className="size-4 text-destructive" />
+                                    </Button>
+                                </div>
+                            )}
+                        </TableCell>
+                        </TableRow>
+                    ))
+                    ) : (
+                    <TableRow>
+                        <TableCell colSpan={isSelectionMode ? 6 : 5} className="text-center h-24">
+                        {transactions?.length === 0 ? "No transactions found." : "No transactions match your current filters."}
+                        </TableCell>
                     </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={isSelectionMode ? 6 : 5} className="text-center h-24">
-                      {transactions?.length === 0 ? "No transactions found." : "No transactions match your current filters."}
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+                    )}
+                </TableBody>
+                </Table>
+            </CardContent>
+            </Card>
+        </AnimatedSection>
       </main>
       <AddTransactionDialog
         isOpen={isAddDialogOpen}

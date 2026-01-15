@@ -28,6 +28,7 @@ import { AlertTriangle, Bot, Calendar, IndianRupee, Info, Repeat, RefreshCw, Han
 import { Button } from '@/components/ui/button';
 import { NegotiationScriptDialog } from '@/components/subscriptions/negotiation-script-dialog';
 import { useInView } from 'framer-motion';
+import { AnimatedSection } from '@/components/animated-section';
 
 const formatCurrency = (amount: number) => {
   return amount.toLocaleString('en-IN', {
@@ -114,99 +115,103 @@ export default function SubscriptionsPage() {
   return (
     <div className="flex min-h-screen w-full flex-col">
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
-        <Card ref={ref}>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Bot className="text-primary" /> Subscription Management
-            </CardTitle>
-            <CardDescription>
-              FinSaathi automatically detects recurring bills and subscriptions from your transaction history.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="w-full overflow-x-auto">
-            <div className="flex gap-6 pb-4 md:grid md:grid-cols-2 lg:grid-cols-3">
-            {pageIsLoading ? (
-              Array.from({ length: 6 }).map((_, i) => (
-                <Card key={i} className="min-w-[300px] md:min-w-0">
-                  <CardHeader>
-                    <Skeleton className="h-6 w-3/4" />
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <Skeleton className="h-8 w-1/2" />
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-3/4" />
-                  </CardContent>
-                </Card>
-              ))
-            ) : !hasTriggered && !isLoadingTransactions ? (
-                <div className="col-span-full text-center text-muted-foreground py-16">
-                    <h3 className="text-lg font-semibold">Ready to find your subscriptions?</h3>
-                    <p>Click the button below to let our AI analyze your transactions.</p>
-                    <Button onClick={fetchSubscriptions} className="mt-4">Analyze Now</Button>
-                </div>
-            ) : error ? (
-                <div className="col-span-full">
-                    <Card className="border-destructive/50">
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2 text-destructive">
-                                <AlertTriangle />
-                                Analysis Error
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <p>{error}</p>
-                        </CardContent>
-                         <CardFooter>
-                            <Button variant="destructive" onClick={fetchSubscriptions}>
-                                <RefreshCw className="mr-2" />
-                                Retry Analysis
-                            </Button>
-                        </CardFooter>
+        <AnimatedSection>
+            <Card ref={ref}>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                <Bot className="text-primary" /> Subscription Management
+                </CardTitle>
+                <CardDescription>
+                FinSaathi automatically detects recurring bills and subscriptions from your transaction history.
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="w-full overflow-x-auto">
+                <div className="flex gap-6 pb-4 md:grid md:grid-cols-2 lg:grid-cols-3">
+                {pageIsLoading ? (
+                Array.from({ length: 6 }).map((_, i) => (
+                    <Card key={i} className="min-w-[300px] md:min-w-0">
+                    <CardHeader>
+                        <Skeleton className="h-6 w-3/4" />
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                        <Skeleton className="h-8 w-1/2" />
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-3/4" />
+                    </CardContent>
                     </Card>
-                </div>
-            ) : subscriptions && subscriptions.length > 0 ? (
-              subscriptions.map((sub, index) => (
-                <Card key={index} className="flex flex-col min-w-[300px] md:min-w-0">
-                  <CardHeader>
-                    <CardTitle className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                            <Repeat />
-                            {sub.name}
+                ))
+                ) : !hasTriggered && !isLoadingTransactions ? (
+                    <div className="col-span-full text-center text-muted-foreground py-16">
+                        <h3 className="text-lg font-semibold">Ready to find your subscriptions?</h3>
+                        <p>Click the button below to let our AI analyze your transactions.</p>
+                        <Button onClick={fetchSubscriptions} className="mt-4">Analyze Now</Button>
+                    </div>
+                ) : error ? (
+                    <div className="col-span-full">
+                        <Card className="border-destructive/50">
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2 text-destructive">
+                                    <AlertTriangle />
+                                    Analysis Error
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <p>{error}</p>
+                            </CardContent>
+                            <CardFooter>
+                                <Button variant="destructive" onClick={fetchSubscriptions}>
+                                    <RefreshCw className="mr-2" />
+                                    Retry Analysis
+                                </Button>
+                            </CardFooter>
+                        </Card>
+                    </div>
+                ) : subscriptions && subscriptions.length > 0 ? (
+                subscriptions.map((sub, index) => (
+                    <AnimatedSection key={index} delay={index * 0.1}>
+                    <Card className="flex flex-col min-w-[300px] md:min-w-0 h-full">
+                    <CardHeader>
+                        <CardTitle className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                                <Repeat />
+                                {sub.name}
+                            </div>
+                            <Button variant="ghost" size="sm" onClick={() => handleNegotiateClick(sub)}>
+                            <Handshake className="mr-2" />
+                            Negotiate Bill
+                            </Button>
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="flex-grow space-y-3">
+                        <div className="flex items-baseline gap-2">
+                            <span className="text-3xl font-bold">{formatCurrency(sub.lastAmount)}</span>
+                            <span className="text-muted-foreground capitalize">/ {sub.frequency}</span>
                         </div>
-                         <Button variant="ghost" size="sm" onClick={() => handleNegotiateClick(sub)}>
-                           <Handshake className="mr-2" />
-                           Negotiate Bill
-                        </Button>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="flex-grow space-y-3">
-                    <div className="flex items-baseline gap-2">
-                        <span className="text-3xl font-bold">{formatCurrency(sub.lastAmount)}</span>
-                        <span className="text-muted-foreground capitalize">/ {sub.frequency}</span>
+                        <div className="text-sm text-muted-foreground flex items-center gap-2">
+                            <Calendar className="size-4" />
+                            <span>Last payment on {sub.lastDate}</span>
+                        </div>
+                    </CardContent>
+                    <CardFooter className="bg-primary/10 p-4 border-t border-primary/20">
+                        <div className="flex items-start gap-3">
+                            <Info className="size-5 mt-1 text-primary"/>
+                            <p className="text-sm text-primary/90">{sub.suggestion}</p>
+                        </div>
+                    </CardFooter>
+                    </Card>
+                    </AnimatedSection>
+                ))
+                ) : (
+                    <div className="col-span-full text-center text-muted-foreground py-16">
+                        <Repeat className="size-12 mx-auto mb-4" />
+                        <h3 className="text-lg font-semibold">No Subscriptions Found</h3>
+                        <p>We couldn't detect any recurring payments from your transaction history.</p>
                     </div>
-                     <div className="text-sm text-muted-foreground flex items-center gap-2">
-                        <Calendar className="size-4" />
-                        <span>Last payment on {sub.lastDate}</span>
-                    </div>
-                  </CardContent>
-                  <CardFooter className="bg-primary/10 p-4 border-t border-primary/20">
-                     <div className="flex items-start gap-3">
-                        <Info className="size-5 mt-1 text-primary"/>
-                        <p className="text-sm text-primary/90">{sub.suggestion}</p>
-                    </div>
-                  </CardFooter>
-                </Card>
-              ))
-            ) : (
-                <div className="col-span-full text-center text-muted-foreground py-16">
-                    <Repeat className="size-12 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold">No Subscriptions Found</h3>
-                    <p>We couldn't detect any recurring payments from your transaction history.</p>
+                )}
                 </div>
-            )}
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+            </Card>
+        </AnimatedSection>
       </main>
       <NegotiationScriptDialog
         isOpen={isNegotiationOpen}

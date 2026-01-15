@@ -16,6 +16,7 @@ import type { Investment } from '@/app/investments/page';
 import type { Account } from '@/app/accounts/page';
 import { UpcomingBills } from '@/components/dashboard/upcoming-bills';
 import { getMonth, getYear, parseISO } from 'date-fns';
+import { AnimatedSection } from '@/components/animated-section';
 
 export interface Transaction {
   description: string;
@@ -124,27 +125,39 @@ export default function DashboardPage() {
   return (
     <>
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
-        <FinancialHealthReport
-            transactions={transactions || []}
-            budgets={budgets || []}
-            goals={goals || []}
-        />
-        <SummaryCards transactions={transactions} accounts={accounts} isLoading={isLoading} />
+        <AnimatedSection>
+            <FinancialHealthReport
+                transactions={transactions || []}
+                budgets={budgets || []}
+                goals={goals || []}
+            />
+        </AnimatedSection>
+        <AnimatedSection delay={0.1}>
+            <SummaryCards transactions={transactions} accounts={accounts} isLoading={isLoading} />
+        </AnimatedSection>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-7">
-          <div className="lg:col-span-4">
+          <AnimatedSection delay={0.2} className="lg:col-span-4">
             <RecentTransactions />
-          </div>
-          <div className="lg:col-span-3">
+          </AnimatedSection>
+          <AnimatedSection delay={0.3} className="lg:col-span-3">
              <ExpenseDistributionChart transactions={expenseTransactions} isLoading={isLoadingTransactions} />
-          </div>
+          </AnimatedSection>
         </div>
          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <BudgetSummary budgets={budgets || []} transactions={transactions || []} isLoading={isLoadingBudgets || isLoadingTransactions} />
-            <GoalSummary goals={goals || []} isLoading={isLoadingGoals} />
-            <InvestmentSummary investments={investments || []} isLoading={isLoadingInvestments} />
+            <AnimatedSection delay={0.4}>
+              <BudgetSummary budgets={budgets || []} transactions={transactions || []} isLoading={isLoadingBudgets || isLoadingTransactions} />
+            </AnimatedSection>
+            <AnimatedSection delay={0.5}>
+              <GoalSummary goals={goals || []} isLoading={isLoadingGoals} />
+            </AnimatedSection>
+            <AnimatedSection delay={0.6}>
+              <InvestmentSummary investments={investments || []} isLoading={isLoadingInvestments} />
+            </AnimatedSection>
         </div>
          <div className="grid grid-cols-1 gap-4">
-            <UpcomingBills transactions={transactions || []} isLoading={isLoadingTransactions} />
+            <AnimatedSection delay={0.7}>
+              <UpcomingBills transactions={transactions || []} isLoading={isLoadingTransactions} />
+            </AnimatedSection>
         </div>
       </main>
     </>

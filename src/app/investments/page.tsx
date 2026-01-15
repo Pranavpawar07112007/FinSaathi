@@ -26,6 +26,7 @@ import { DeleteInvestmentDialog } from '@/components/investments/delete-investme
 import type { WithId } from '@/firebase/firestore/use-collection';
 import { differenceInMonths, parse, isValid, differenceInYears } from 'date-fns';
 import { Progress } from '@/components/ui/progress';
+import { AnimatedSection } from '@/components/animated-section';
 
 export interface Investment {
     name: string;
@@ -161,124 +162,128 @@ export default function InvestmentsPage() {
   return (
     <div className="flex min-h-screen w-full flex-col">
       <main className="flex flex-1 flex-col gap-8 p-4 md:gap-8 md:p-8">
-        <Card>
-          <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between">
-            <div>
-              <CardTitle>Investments</CardTitle>
-              <CardDescription>
-                Track your investment portfolio and its performance.
-              </CardDescription>
-            </div>
-             <div className="flex items-center gap-4 mt-4 md:mt-0">
-                <div className="text-right">
-                    <p className="text-sm text-muted-foreground">Total Portfolio Value</p>
-                    <p className="text-2xl font-bold">{formatCurrency(totalPortfolioValue)}</p>
+        <AnimatedSection>
+            <Card>
+            <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between">
+                <div>
+                <CardTitle>Investments</CardTitle>
+                <CardDescription>
+                    Track your investment portfolio and its performance.
+                </CardDescription>
                 </div>
-                <Button size="sm" onClick={() => setIsAddOpen(true)}>
-                    <PlusCircle className="mr-2"/>
-                    Add Investment
-                </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="w-full overflow-x-auto">
-            <div className="flex gap-6 pb-4 sm:grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-              {isLoading
-                ? Array.from({ length: 3 }).map((_, i) => (
-                    <Card key={i} className="min-w-[300px] sm:min-w-0">
-                        <CardHeader>
-                            <Skeleton className="h-6 w-3/4" />
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <Skeleton className="h-8 w-1/2" />
-                            <div className="flex justify-between">
-                                <Skeleton className="h-5 w-20" />
-                                <Skeleton className="h-5 w-20" />
-                            </div>
-                        </CardContent>
-                    </Card>
-                  ))
-                : processedInvestments.map((investment) => {
-                    const Icon = ICONS[investment.type] || ICONS.Other;
-                    const isProfit = investment.gainLoss !== null && investment.gainLoss >= 0;
-                    const progressPercentage = investment.progressTarget ? (investment.currentValue / investment.progressTarget) * 100 : null;
-
-                    return (
-                      <Card key={investment.id} className="flex flex-col min-w-[300px] sm:min-w-0">
-                        <CardHeader className="pb-4">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <Icon className="size-6 text-muted-foreground"/>
-                                <div>
-                                    <CardTitle className="text-lg">{investment.name}</CardTitle>
-                                    <CardDescription>{investment.type}</CardDescription>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-1">
-                                <Button variant="ghost" size="icon" className="size-8" onClick={() => handleEditClick(investment)}>
-                                    <Pencil className="size-4" />
-                                </Button>
-                                <Button variant="ghost" size="icon" className="size-8" onClick={() => handleDeleteClick(investment)}>
-                                    <Trash2 className="size-4 text-destructive" />
-                                </Button>
-                            </div>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="flex-grow space-y-3">
-                            <div>
-                                <p className="text-sm text-muted-foreground">
-                                    {investment.type === 'Fixed Deposit' || investment.type === 'Recurring Deposit' ? 'Est. Maturity Value' : 'Current Value' }
-                                </p>
-                                <p className="text-2xl font-bold">{formatCurrency(investment.displayValue)}</p>
-                            </div>
-                            {progressPercentage !== null && investment.progressTarget !== null && (
-                                <div>
-                                    <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                                        <span>{formatCurrency(investment.currentValue)}</span>
-                                        <span>{formatCurrency(investment.progressTarget)}</span>
-                                    </div>
-                                    <Progress value={progressPercentage} />
-                                </div>
-                            )}
-                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                {investment.interestRate && (
-                                    <div className="flex items-center gap-1">
-                                        <Percent className="size-4"/>
-                                        <span>{investment.interestRate}%</span>
-                                    </div>
-                                )}
-                                {investment.maturityDate && (
-                                     <div className="flex items-center gap-1">
-                                        <CalendarDays className="size-4"/>
-                                        <span>{investment.maturityDate}</span>
-                                     </div>
-                                )}
-                            </div>
-                             {typeof investment.quantity === 'number' && (
-                                <p className="text-sm text-muted-foreground">Quantity: {investment.quantity}</p>
-                             )}
-                        </CardContent>
-                        {investment.gainLoss !== null && (
-                             <CardFooter className="flex flex-col items-start pt-4 border-t">
-                                <p className="text-sm">
-                                    Overall Return: 
-                                    <span className={`font-bold ${isProfit ? 'text-green-600' : 'text-destructive'}`}>
-                                        {' '}{formatCurrency(investment.gainLoss)}
-                                    </span>
-                                </p>
-                             </CardFooter>
-                        )}
-                      </Card>
-                    );
-                  })}
-                {!isLoading && (!processedInvestments || processedInvestments.length === 0) && (
-                    <div className="col-span-full text-center py-10 text-muted-foreground">
-                        <p>You haven't added any investments yet.</p>
-                        <p>Click "Add Investment" to get started.</p>
+                <div className="flex items-center gap-4 mt-4 md:mt-0">
+                    <div className="text-right">
+                        <p className="text-sm text-muted-foreground">Total Portfolio Value</p>
+                        <p className="text-2xl font-bold">{formatCurrency(totalPortfolioValue)}</p>
                     </div>
-                )}
-            </div>
-          </CardContent>
-        </Card>
+                    <Button size="sm" onClick={() => setIsAddOpen(true)}>
+                        <PlusCircle className="mr-2"/>
+                        Add Investment
+                    </Button>
+                </div>
+            </CardHeader>
+            <CardContent className="w-full overflow-x-auto">
+                <div className="flex gap-6 pb-4 sm:grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                {isLoading
+                    ? Array.from({ length: 3 }).map((_, i) => (
+                        <Card key={i} className="min-w-[300px] sm:min-w-0">
+                            <CardHeader>
+                                <Skeleton className="h-6 w-3/4" />
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <Skeleton className="h-8 w-1/2" />
+                                <div className="flex justify-between">
+                                    <Skeleton className="h-5 w-20" />
+                                    <Skeleton className="h-5 w-20" />
+                                </div>
+                            </CardContent>
+                        </Card>
+                    ))
+                    : processedInvestments.map((investment, index) => {
+                        const Icon = ICONS[investment.type] || ICONS.Other;
+                        const isProfit = investment.gainLoss !== null && investment.gainLoss >= 0;
+                        const progressPercentage = investment.progressTarget ? (investment.currentValue / investment.progressTarget) * 100 : null;
+
+                        return (
+                        <AnimatedSection delay={index * 0.1} key={investment.id}>
+                        <Card className="flex flex-col min-w-[300px] sm:min-w-0 h-full">
+                            <CardHeader className="pb-4">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <Icon className="size-6 text-muted-foreground"/>
+                                    <div>
+                                        <CardTitle className="text-lg">{investment.name}</CardTitle>
+                                        <CardDescription>{investment.type}</CardDescription>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <Button variant="ghost" size="icon" className="size-8" onClick={() => handleEditClick(investment)}>
+                                        <Pencil className="size-4" />
+                                    </Button>
+                                    <Button variant="ghost" size="icon" className="size-8" onClick={() => handleDeleteClick(investment)}>
+                                        <Trash2 className="size-4 text-destructive" />
+                                    </Button>
+                                </div>
+                            </div>
+                            </CardHeader>
+                            <CardContent className="flex-grow space-y-3">
+                                <div>
+                                    <p className="text-sm text-muted-foreground">
+                                        {investment.type === 'Fixed Deposit' || investment.type === 'Recurring Deposit' ? 'Est. Maturity Value' : 'Current Value' }
+                                    </p>
+                                    <p className="text-2xl font-bold">{formatCurrency(investment.displayValue)}</p>
+                                </div>
+                                {progressPercentage !== null && investment.progressTarget !== null && (
+                                    <div>
+                                        <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                                            <span>{formatCurrency(investment.currentValue)}</span>
+                                            <span>{formatCurrency(investment.progressTarget)}</span>
+                                        </div>
+                                        <Progress value={progressPercentage} />
+                                    </div>
+                                )}
+                                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                    {investment.interestRate && (
+                                        <div className="flex items-center gap-1">
+                                            <Percent className="size-4"/>
+                                            <span>{investment.interestRate}%</span>
+                                        </div>
+                                    )}
+                                    {investment.maturityDate && (
+                                        <div className="flex items-center gap-1">
+                                            <CalendarDays className="size-4"/>
+                                            <span>{investment.maturityDate}</span>
+                                        </div>
+                                    )}
+                                </div>
+                                {typeof investment.quantity === 'number' && (
+                                    <p className="text-sm text-muted-foreground">Quantity: {investment.quantity}</p>
+                                )}
+                            </CardContent>
+                            {investment.gainLoss !== null && (
+                                <CardFooter className="flex flex-col items-start pt-4 border-t">
+                                    <p className="text-sm">
+                                        Overall Return: 
+                                        <span className={`font-bold ${isProfit ? 'text-green-600' : 'text-destructive'}`}>
+                                            {' '}{formatCurrency(investment.gainLoss)}
+                                        </span>
+                                    </p>
+                                </CardFooter>
+                            )}
+                        </Card>
+                        </AnimatedSection>
+                        );
+                    })}
+                    {!isLoading && (!processedInvestments || processedInvestments.length === 0) && (
+                        <div className="col-span-full text-center py-10 text-muted-foreground">
+                            <p>You haven't added any investments yet.</p>
+                            <p>Click "Add Investment" to get started.</p>
+                        </div>
+                    )}
+                </div>
+            </CardContent>
+            </Card>
+        </AnimatedSection>
       </main>
       <AddInvestmentDialog isOpen={isAddOpen} setIsOpen={setIsAddOpen} />
       <EditInvestmentDialog isOpen={isEditOpen} setIsOpen={setIsEditOpen} investment={selectedInvestment} />

@@ -25,6 +25,7 @@ import { AddBudgetDialog } from '@/components/budgets/add-budget-dialog';
 import { EditBudgetDialog } from '@/components/budgets/edit-budget-dialog';
 import { DeleteBudgetDialog } from '@/components/budgets/delete-budget-dialog';
 import { getMonth, getYear, parseISO } from 'date-fns';
+import { AnimatedSection } from '@/components/animated-section';
 
 const ICONS: { [key: string]: React.ElementType } = {
     Groceries: Utensils,
@@ -116,88 +117,92 @@ export default function BudgetsPage() {
   return (
     <div className="flex min-h-screen w-full flex-col">
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle>Budgets</CardTitle>
-              <CardDescription>
-                Track your monthly spending against your budget goals.
-              </CardDescription>
-            </div>
-            <Button size="sm" onClick={() => setIsAddBudgetOpen(true)}>
-                <PlusCircle className="mr-2"/>
-                Create Budget
-            </Button>
-          </CardHeader>
-          <CardContent className="w-full overflow-x-auto">
-            <div className="flex gap-6 pb-4 sm:grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-              {isLoading
-                ? Array.from({ length: 6 }).map((_, i) => (
-                    <Card key={i} className="min-w-[300px] sm:min-w-0">
-                      <CardHeader className="pb-4">
-                        <div className="flex items-center justify-between">
-                          <Skeleton className="h-6 w-24" />
-                          <Skeleton className="h-6 w-6 rounded-full" />
-                        </div>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        <Skeleton className="h-4 w-full" />
-                        <div className="flex justify-between">
-                          <Skeleton className="h-5 w-20" />
-                          <Skeleton className="h-5 w-20" />
-                        </div>
-                        <Skeleton className="h-5 w-28" />
-                      </CardContent>
-                    </Card>
-                  ))
-                : budgets.map((budget) => {
-                    const percentage =
-                      budget.limit > 0
-                        ? (budget.spent / budget.limit) * 100
-                        : 0;
-                    const Icon = ICONS[budget.name] || ICONS.Default;
-                    return (
-                      <Card key={budget.id} className="min-w-[300px] sm:min-w-0">
+        <AnimatedSection>
+            <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                <CardTitle>Budgets</CardTitle>
+                <CardDescription>
+                    Track your monthly spending against your budget goals.
+                </CardDescription>
+                </div>
+                <Button size="sm" onClick={() => setIsAddBudgetOpen(true)}>
+                    <PlusCircle className="mr-2"/>
+                    Create Budget
+                </Button>
+            </CardHeader>
+            <CardContent className="w-full overflow-x-auto">
+                <div className="flex gap-6 pb-4 sm:grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                {isLoading
+                    ? Array.from({ length: 6 }).map((_, i) => (
+                        <Card key={i} className="min-w-[300px] sm:min-w-0">
                         <CardHeader className="pb-4">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <Icon className="size-5 text-muted-foreground" />
-                                <CardTitle className="text-lg">
-                                {budget.name}
-                                </CardTitle>
+                            <div className="flex items-center justify-between">
+                            <Skeleton className="h-6 w-24" />
+                            <Skeleton className="h-6 w-6 rounded-full" />
                             </div>
-                            <div className="flex items-center gap-1">
-                                <Button variant="ghost" size="icon" className="size-8" onClick={() => handleEditClick(budget)}>
-                                    <Pencil className="size-4" />
-                                </Button>
-                                <Button variant="ghost" size="icon" className="size-8" onClick={() => handleDeleteClick(budget)}>
-                                    <Trash2 className="size-4 text-destructive" />
-                                </Button>
-                            </div>
-                          </div>
                         </CardHeader>
-                        <CardContent className="space-y-2">
-                          <Progress value={percentage} />
-                          <div className="flex justify-between text-sm text-muted-foreground">
-                            <span>Spent: {formatCurrency(budget.spent)}</span>
-                            <span>Limit: {formatCurrency(budget.limit)}</span>
-                          </div>
-                          <p className="text-sm font-medium">
-                            Remaining: {formatCurrency(budget.remaining)}
-                          </p>
+                        <CardContent className="space-y-4">
+                            <Skeleton className="h-4 w-full" />
+                            <div className="flex justify-between">
+                            <Skeleton className="h-5 w-20" />
+                            <Skeleton className="h-5 w-20" />
+                            </div>
+                            <Skeleton className="h-5 w-28" />
                         </CardContent>
-                      </Card>
-                    );
-                  })}
-                {!isLoading && budgets.length === 0 && (
-                    <div className="col-span-full text-center py-10 text-muted-foreground">
-                        <p>You haven't created any budgets yet.</p>
-                        <p>Click "Create Budget" to get started.</p>
-                    </div>
-                )}
-            </div>
-          </CardContent>
-        </Card>
+                        </Card>
+                    ))
+                    : budgets.map((budget, index) => {
+                        const percentage =
+                        budget.limit > 0
+                            ? (budget.spent / budget.limit) * 100
+                            : 0;
+                        const Icon = ICONS[budget.name] || ICONS.Default;
+                        return (
+                        <AnimatedSection delay={index * 0.1} key={budget.id}>
+                        <Card className="min-w-[300px] sm:min-w-0 h-full">
+                            <CardHeader className="pb-4">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <Icon className="size-5 text-muted-foreground" />
+                                    <CardTitle className="text-lg">
+                                    {budget.name}
+                                    </CardTitle>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <Button variant="ghost" size="icon" className="size-8" onClick={() => handleEditClick(budget)}>
+                                        <Pencil className="size-4" />
+                                    </Button>
+                                    <Button variant="ghost" size="icon" className="size-8" onClick={() => handleDeleteClick(budget)}>
+                                        <Trash2 className="size-4 text-destructive" />
+                                    </Button>
+                                </div>
+                            </div>
+                            </CardHeader>
+                            <CardContent className="space-y-2">
+                            <Progress value={percentage} />
+                            <div className="flex justify-between text-sm text-muted-foreground">
+                                <span>Spent: {formatCurrency(budget.spent)}</span>
+                                <span>Limit: {formatCurrency(budget.limit)}</span>
+                            </div>
+                            <p className="text-sm font-medium">
+                                Remaining: {formatCurrency(budget.remaining)}
+                            </p>
+                            </CardContent>
+                        </Card>
+                        </AnimatedSection>
+                        );
+                    })}
+                    {!isLoading && budgets.length === 0 && (
+                        <div className="col-span-full text-center py-10 text-muted-foreground">
+                            <p>You haven't created any budgets yet.</p>
+                            <p>Click "Create Budget" to get started.</p>
+                        </div>
+                    )}
+                </div>
+            </CardContent>
+            </Card>
+        </AnimatedSection>
       </main>
       <AddBudgetDialog isOpen={isAddBudgetOpen} setIsOpen={setIsAddBudgetOpen} availableCategories={availableBudgetCategories} />
       <EditBudgetDialog isOpen={isEditBudgetOpen} setIsOpen={setIsEditBudgetOpen} budget={selectedBudget} />

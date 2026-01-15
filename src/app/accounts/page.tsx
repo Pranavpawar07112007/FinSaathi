@@ -1,3 +1,4 @@
+
 'use client';
 
 import Header from '@/components/header';
@@ -23,6 +24,7 @@ import { LinkAccountDialog } from '@/components/link-account-dialog';
 import { DeleteAccountDialog } from '@/components/delete-account-dialog';
 import type { WithId } from '@/firebase/firestore/use-collection';
 import { EditAccountDialog } from '@/components/accounts/edit-account-dialog';
+import { AnimatedSection } from '@/components/animated-section';
 
 export interface Account {
     id?: string;
@@ -74,6 +76,7 @@ export default function AccountsPage() {
   return (
     <div className="flex min-h-screen w-full flex-col">
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
+        <AnimatedSection>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <div className="space-y-1.5">
@@ -104,36 +107,37 @@ export default function AccountsPage() {
                     </CardContent>
                   </Card>
                 ))
-              : accounts?.map((account) => {
+              : accounts?.map((account, index) => {
                   const Icon = ICONS[account.name] || ICONS.Default;
                   return (
-                    <Card
-                      key={account.id}
-                      className="hover:shadow-lg transition-shadow duration-300 min-w-[300px] md:min-w-0"
-                    >
-                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium flex items-center gap-2">
-                          <Icon className="size-5 text-muted-foreground" />
-                          {account.name}
-                        </CardTitle>
-                        <div className="flex items-center gap-1">
-                          <Button variant="ghost" size="icon" className="size-8" onClick={() => handleEditClick(account)}>
-                              <Pencil className="size-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="size-8" onClick={() => handleDeleteClick(account)}>
-                              <Trash2 className="size-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-2xl font-bold">
-                          {formatCurrency(account.balance)}
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          Manually linked account
-                        </p>
-                      </CardContent>
-                    </Card>
+                    <AnimatedSection key={account.id} delay={index * 0.1}>
+                        <Card
+                        className="hover:shadow-lg transition-shadow duration-300 min-w-[300px] md:min-w-0 h-full"
+                        >
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium flex items-center gap-2">
+                            <Icon className="size-5 text-muted-foreground" />
+                            {account.name}
+                            </CardTitle>
+                            <div className="flex items-center gap-1">
+                            <Button variant="ghost" size="icon" className="size-8" onClick={() => handleEditClick(account)}>
+                                <Pencil className="size-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="size-8" onClick={() => handleDeleteClick(account)}>
+                                <Trash2 className="size-4 text-destructive" />
+                            </Button>
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">
+                            {formatCurrency(account.balance)}
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                            Manually linked account
+                            </p>
+                        </CardContent>
+                        </Card>
+                    </AnimatedSection>
                   );
                 })}
              {!isLoading && (!accounts || accounts.length === 0) && (
@@ -145,6 +149,7 @@ export default function AccountsPage() {
             </div>
           </CardContent>
         </Card>
+        </AnimatedSection>
       </main>
       <LinkAccountDialog
         isOpen={isLinkAccountDialogOpen}

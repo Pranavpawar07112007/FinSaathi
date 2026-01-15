@@ -40,6 +40,12 @@ const nextConfig: NextConfig = {
         hostname: 'image.finnhub.io',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'static2.finnhub.io',
+        port: '',
+        pathname: '/**',
       }
     ],
   },

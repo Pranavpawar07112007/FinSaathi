@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useRef, useMemo } from 'react';
@@ -19,7 +18,7 @@ import {
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
-import { AlertTriangle, Check, Loader2, Upload, Sparkles, FileCheck, Info, Image as ImageIcon, FileText, Landmark, ShieldAlert } from 'lucide-react';
+import { AlertTriangle, Check, Loader2, Upload, Sparkles, FileCheck, Info, Image as ImageIcon, FileText, Landmark, ShieldAlert, Pencil } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -37,6 +36,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import type { Account } from '@/app/accounts/page';
 import type { WithId } from '@/firebase/firestore/use-collection';
 import { Label } from '../ui/label';
+import { EditParsedTransactionDialog } from './edit-parsed-transaction-dialog';
 
 interface ImportTransactionsDialogProps {
   isOpen: boolean;
@@ -46,7 +46,7 @@ interface ImportTransactionsDialogProps {
 type Step = 'upload' | 'review';
 type ImportSource = 'csv' | 'image' | 'pdf';
 
-type ParsedTransaction = {
+export type ParsedTransaction = {
     date: string;
     description: string;
     amount: number;
@@ -73,6 +73,8 @@ export function ImportTransactionsDialog({
   const [selectedAccountId, setSelectedAccountId] = useState<string>('');
   const [source, setSource] = useState<ImportSource>('csv');
   const [duplicates, setDuplicates] = useState<ParsedTransaction[]>([]);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [transactionToEdit, setTransactionToEdit] = useState<{ transaction: ParsedTransaction, index: number } | null>(null);
 
 
   const { user } = useUser();
@@ -265,6 +267,18 @@ export function ImportTransactionsDialog({
     } finally {
         setIsSaving(false);
     }
+  };
+
+  const handleEditClick = (transaction: ParsedTransaction, index: number) => {
+    setTransactionToEdit({ transaction, index });
+    setIsEditOpen(true);
+  };
+  
+  const handleSaveEdit = (index: number, updatedTransaction: ParsedTransaction) => {
+    const newTransactions = [...parsedTransactions];
+    newTransactions[index] = updatedTransaction;
+    setParsedTransactions(newTransactions);
+    setIsEditOpen(false);
   };
 
   const handleClose = () => {
@@ -463,6 +477,7 @@ export function ImportTransactionsDialog({
                 <TableHead>Description</TableHead>
                 <TableHead>Category</TableHead>
                 <TableHead className="text-right">Amount</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -472,6 +487,11 @@ export function ImportTransactionsDialog({
                   <TableCell>{t.description}</TableCell>
                   <TableCell>{t.category}</TableCell>
                   <TableCell className={`text-right font-medium ${t.amount < 0 ? 'text-destructive' : 'text-green-600'}`}>{formatCurrency(Math.abs(t.amount))}</TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="ghost" size="icon" onClick={() => handleEditClick(t, index)}>
+                        <Pencil className="size-4" />
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -506,11 +526,19 @@ export function ImportTransactionsDialog({
 
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent className="sm:max-w-3xl">
-        {step === 'upload' && renderUploadStep()}
-        {step === 'review' && renderReviewStep()}
-      </DialogContent>
-    </Dialog>
+    <>
+        <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+        <DialogContent className="sm:max-w-3xl">
+            {step === 'upload' && renderUploadStep()}
+            {step === 'review' && renderReviewStep()}
+        </DialogContent>
+        </Dialog>
+         <EditParsedTransactionDialog
+            isOpen={isEditOpen}
+            setIsOpen={setIsEditOpen}
+            transactionData={transactionToEdit}
+            onSave={handleSaveEdit}
+        />
+    </>
   );
 }

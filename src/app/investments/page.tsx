@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useMemo, useState, useEffect, useCallback } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Card,
   CardContent,
@@ -19,15 +19,13 @@ import {
 import { collection, query } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Pencil, Trash2, TrendingUp, DollarSign, Bitcoin, LandmarkIcon, PiggyBank, ReceiptText, AreaChart, CircleDot, CalendarDays, Percent, Newspaper, ExternalLink, AlertTriangle, ArrowUpCircle, Info } from 'lucide-react';
+import { PlusCircle, Pencil, Trash2, TrendingUp, DollarSign, Bitcoin, LandmarkIcon, PiggyBank, ReceiptText, AreaChart, CircleDot, CalendarDays, Percent } from 'lucide-react';
 import { AddInvestmentDialog } from '@/components/investments/add-investment-dialog';
 import { EditInvestmentDialog } from '@/components/investments/edit-investment-dialog';
 import { DeleteInvestmentDialog } from '@/components/investments/delete-investment-dialog';
 import type { WithId } from '@/firebase/firestore/use-collection';
 import { differenceInMonths, parse, isValid, differenceInYears } from 'date-fns';
 import { Progress } from '@/components/ui/progress';
-import { getInvestmentNews, type GetInvestmentNewsOutput } from '@/ai/flows/get-investment-news-flow';
-import { cn } from '@/lib/utils';
 
 export interface Investment {
     name: string;
@@ -89,9 +87,6 @@ export default function InvestmentsPage() {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selectedInvestment, setSelectedInvestment] = useState<WithId<Investment> | null>(null);
   
-  const [news, setNews] = useState<GetInvestmentNewsOutput['news']>([]);
-  const [isNewsLoading, setIsNewsLoading] = useState(false);
-
   const investmentsQuery = useMemoFirebase(() => {
     if (!user) return null;
     return query(collection(firestore, 'users', user.uid, 'investments'));
@@ -99,27 +94,6 @@ export default function InvestmentsPage() {
 
   const { data: investments, isLoading } = useCollection<Investment>(investmentsQuery);
 
-  const fetchNews = useCallback(async () => {
-    if (!investments || investments.length === 0) {
-      setNews([]);
-      return;
-    }
-    setIsNewsLoading(true);
-    try {
-      const investmentNames = investments.map(inv => inv.name);
-      const newsData = await getInvestmentNews({ investmentNames });
-      setNews(newsData.news);
-    } catch (error) {
-      console.error("Failed to fetch investment news:", error);
-    } finally {
-      setIsNewsLoading(false);
-    }
-  }, [investments]);
-
-  useEffect(() => {
-    fetchNews();
-  }, [fetchNews]);
-  
   const processedInvestments = useMemo(() => {
     if (!investments) return [];
     return investments.map(inv => {
@@ -183,25 +157,6 @@ export default function InvestmentsPage() {
     setSelectedInvestment(investment);
     setIsDeleteOpen(true);
   };
-  
-  const alertIcons: { [key: string]: React.ElementType } = {
-    Opportunity: ArrowUpCircle,
-    Risk: AlertTriangle,
-    Neutral: Info,
-  };
-
-  const alertColors: { [key: string]: string } = {
-    Opportunity: 'border-green-500/50 bg-green-500/10',
-    Risk: 'border-destructive/50 bg-destructive/10',
-    Neutral: 'border-blue-500/50 bg-blue-500/10',
-  };
-  
-  const alertIconColors: { [key: string]: string } = {
-    Opportunity: 'text-green-500',
-    Risk: 'text-destructive',
-    Neutral: 'text-blue-500',
-  };
-
 
   return (
     <div className="flex min-h-screen w-full flex-col">
@@ -324,59 +279,6 @@ export default function InvestmentsPage() {
             </div>
           </CardContent>
         </Card>
-        
-        <Card>
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <Newspaper />
-                    Market Alerts
-                </CardTitle>
-                <CardDescription>
-                    AI-analyzed news and events relevant to your portfolio.
-                </CardDescription>
-            </CardHeader>
-             <CardContent className="w-full overflow-x-auto">
-                <div className="flex gap-4 pb-4 md:grid md:grid-cols-2">
-                {isNewsLoading ? (
-                     <>
-                        {Array.from({ length: 2 }).map((_, i) => (
-                             <Card key={i} className="p-4 space-y-2 min-w-[300px] md:min-w-0">
-                                <Skeleton className="h-5 w-3/4"/>
-                                <Skeleton className="h-4 w-full"/>
-                                <Skeleton className="h-4 w-1/2"/>
-                             </Card>
-                        ))}
-                    </>
-                ) : news.length > 0 ? (
-                    <>
-                        {news.map((item, index) => {
-                             const AlertIcon = alertIcons[item.alertType] || Info;
-                             return (
-                                <Card key={index} className={cn("p-4 flex flex-col min-w-[300px] md:min-w-0", alertColors[item.alertType])}>
-                                    <div className="flex items-start gap-3 mb-2">
-                                        <AlertIcon className={cn("size-5 mt-1", alertIconColors[item.alertType])} />
-                                        <div>
-                                            <p className="font-semibold">{item.headline}</p>
-                                            <p className="text-xs text-muted-foreground">{item.source} - for {item.investmentName}</p>
-                                        </div>
-                                    </div>
-                                    <p className="text-sm text-muted-foreground flex-grow">{item.summary}</p>
-                                    <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline mt-2 flex items-center gap-1">
-                                        Read More <ExternalLink className="size-3"/>
-                                    </a>
-                                </Card>
-                             )
-                        })}
-                    </>
-                ) : (
-                    <div className="w-full text-center text-muted-foreground py-8">
-                        <p>No news to display. Add some investments to get started.</p>
-                    </div>
-                )}
-                </div>
-             </CardContent>
-        </Card>
-
       </main>
       <AddInvestmentDialog isOpen={isAddOpen} setIsOpen={setIsAddOpen} />
       <EditInvestmentDialog isOpen={isEditOpen} setIsOpen={setIsEditOpen} investment={selectedInvestment} />

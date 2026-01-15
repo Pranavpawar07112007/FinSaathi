@@ -10,6 +10,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
+import { getMarketNews, type MarketNewsItem } from '@/services/finnhub';
 
 const GetInvestmentNewsInputSchema = z.object({
   investmentNames: z
@@ -38,6 +39,24 @@ export type GetInvestmentNewsOutput = z.infer<
   typeof GetInvestmentNewsOutputSchema
 >;
 
+
+const getMarketNewsForTicker = ai.defineTool(
+    {
+      name: 'getMarketNewsForTicker',
+      description: 'Get the latest market news for a given stock ticker symbol.',
+      inputSchema: z.object({
+        ticker: z.string().describe('The stock ticker symbol (e.g., "AAPL", "RELIANCE.NS").'),
+      }),
+      outputSchema: z.array(z.object({
+          headline: z.string(),
+          summary: z.string(),
+          url: z.string(),
+          source: z.string(),
+      })),
+    },
+    async ({ ticker }) => getMarketNews(ticker)
+);
+
 export async function getInvestmentNews(
   input: GetInvestmentNewsInput
 ): Promise<GetInvestmentNewsOutput> {
@@ -48,9 +67,12 @@ const prompt = ai.definePrompt({
   name: 'getInvestmentNewsPrompt',
   input: { schema: GetInvestmentNewsInputSchema },
   output: { schema: GetInvestmentNewsOutputSchema },
-  prompt: `You are a financial news analyst. Your task is to find the single most relevant and recent news headline for each of the following investments and classify it as a potential opportunity, risk, or neutral event for the investor. The news must not be older than 6 months.
-
-  For each investment, provide a real, recent headline, a brief summary, the source, a valid URL, and an 'alertType'.
+  tools: [getMarketNewsForTicker],
+  system: `You are a financial news analyst. Your task is to find the single most relevant and recent news headline for each of the following investments and classify it as a potential opportunity, risk, or neutral event for the investor.
+  
+  For each investment, you MUST use the getMarketNewsForTicker tool. You will need to infer the stock ticker from the investment name. For Indian stocks, append '.NS'. For others, use the US ticker.
+  
+  From the news returned by the tool, select the most impactful article. Then, provide the headline, a brief summary, the source, a valid URL, and an 'alertType'.
   - **Opportunity**: The news suggests positive future performance (e.g., new product launch, favorable regulation).
   - **Risk**: The news suggests potential negative performance (e.g., regulatory trouble, poor earnings).
   - **Neutral**: The news is informational but not strongly positive or negative.

@@ -36,7 +36,14 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="font-body antialiased" suppressHydrationWarning>
+      <body className="font-body antialiased bg-background" suppressHydrationWarning>
+        <div
+          className="fixed inset-0 -z-10 overflow-hidden"
+          aria-hidden="true"
+        >
+          <div className="absolute left-[max(50%,25rem)] top-0 h-[64rem] w-[64rem] -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
+          <div className="absolute left-1/2 top-1/2 h-[48rem] w-[48rem] -translate-x-1/4 -translate-y-1/2 rounded-full bg-accent/20 blur-3xl" />
+        </div>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

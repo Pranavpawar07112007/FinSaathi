@@ -43,7 +43,6 @@ const menuItems = [
 export function Sidebar() {
   const pathname = usePathname();
   const isMobile = useIsMobile();
-  const Wrapper = isMobile ? SheetClose : React.Fragment;
 
   return (
     <div className="flex h-full flex-col gap-2 rounded-2xl border bg-background shadow-sm">
@@ -55,20 +54,34 @@ export function Sidebar() {
         </div>
         <div className="flex-1 overflow-auto py-2">
             <nav className="grid items-start px-4 text-sm font-medium">
-            {menuItems.map((item) => (
-              <Wrapper asChild key={item.label}>
-                <Link
+            {menuItems.map((item) =>
+              isMobile ? (
+                <SheetClose asChild key={item.label}>
+                  <Link
                     href={item.href}
                     className={cn(
-                    'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary',
-                    pathname === item.href && 'bg-muted text-primary'
+                      'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary',
+                      pathname === item.href && 'bg-muted text-primary'
                     )}
-                >
+                  >
                     <item.icon className="h-4 w-4" />
                     {item.label}
+                  </Link>
+                </SheetClose>
+              ) : (
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  className={cn(
+                    'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary',
+                    pathname === item.href && 'bg-muted text-primary'
+                  )}
+                >
+                  <item.icon className="h-4 w-4" />
+                  {item.label}
                 </Link>
-              </Wrapper>
-            ))}
+              )
+            )}
             </nav>
         </div>
     </div>

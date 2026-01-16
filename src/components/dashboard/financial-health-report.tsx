@@ -61,7 +61,7 @@ export function FinancialHealthReport({
       setIsLoadingNews(true);
       const { news, error } = await getMarketNews('general');
       if (error) {
-        console.error("Failed to load market news for health report:", error);
+        // The error is logged by the service, no need to log it here again.
       }
       setMarketNews(news.slice(0, 5)); // Get top 5 for context
       setIsLoadingNews(false);

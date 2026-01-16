@@ -67,7 +67,7 @@ export default function AdvicePage() {
       setIsLoadingNews(true);
       const { news, error } = await getMarketNews('general');
       if (error) {
-          console.error("Failed to load market news for advice page:", error);
+          // The error is logged by the service, no need to log it here again.
       }
       setMarketNews(news.slice(0, 10)); // Get top 10 news items
       setIsLoadingNews(false);

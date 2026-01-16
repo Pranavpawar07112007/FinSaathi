@@ -141,7 +141,7 @@ export default function ChatbotPage() {
       setIsLoadingNews(true);
       const { news, error } = await getMarketNews('general');
       if (error) {
-          console.error("Failed to load market news for chatbot:", error);
+          // The error is logged by the service, no need to log it here again.
       }
       setMarketNews(news.slice(0, 5)); // Get top 5 news items for context
       setIsLoadingNews(false);

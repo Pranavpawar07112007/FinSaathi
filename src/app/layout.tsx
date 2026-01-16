@@ -59,7 +59,7 @@ export default function RootLayout({
         >
           <FirebaseClientProvider>
             <AppLayout>
-              <main className="flex-1">
+              <main className="flex-1 overflow-x-hidden">
                 <PageTransition>{children}</PageTransition>
               </main>
             </AppLayout>

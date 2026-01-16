@@ -21,6 +21,8 @@ import {
 } from 'lucide-react';
 import { SheetClose } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
+import React from 'react';
 
 const menuItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -40,6 +42,8 @@ const menuItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const isMobile = useIsMobile();
+  const Wrapper = isMobile ? SheetClose : React.Fragment;
 
   return (
     <div className="flex h-full flex-col gap-2 rounded-2xl border bg-background shadow-sm">
@@ -52,7 +56,7 @@ export function Sidebar() {
         <div className="flex-1 overflow-auto py-2">
             <nav className="grid items-start px-4 text-sm font-medium">
             {menuItems.map((item) => (
-              <SheetClose asChild key={item.label}>
+              <Wrapper asChild key={item.label}>
                 <Link
                     href={item.href}
                     className={cn(
@@ -63,7 +67,7 @@ export function Sidebar() {
                     <item.icon className="h-4 w-4" />
                     {item.label}
                 </Link>
-              </SheetClose>
+              </Wrapper>
             ))}
             </nav>
         </div>

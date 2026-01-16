@@ -1,3 +1,4 @@
+
 'use client';
 
 import { usePathname } from 'next/navigation';
@@ -15,7 +16,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
   if (!showNav) {
     return (
-      <div className="flex min-h-screen w-full flex-col">
+      <div className="flex min-h-screen w-full flex-col overflow-x-hidden">
         {children}
       </div>
     );
@@ -24,9 +25,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
   return (
     <div className="grid min-h-screen w-full lg:grid-cols-[280px_1fr]">
       <aside className="hidden lg:block sticky top-0 h-screen p-4">
-        <Sidebar />
+        <Sidebar isInSheet={false} />
       </aside>
-      <div className="flex flex-col">
+      <div className="flex flex-col overflow-x-hidden">
         <Header />
         {children}
       </div>

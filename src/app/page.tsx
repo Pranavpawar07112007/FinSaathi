@@ -15,6 +15,7 @@ import {
   Languages,
   Briefcase,
   Repeat,
+  Newspaper,
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -50,10 +51,9 @@ const features = [
       'Generate a personalized, step-by-step plan using Avalanche or Snowball methods to become debt-free faster.',
   },
   {
-    icon: <Languages className="size-10 text-primary" />,
-    title: 'Multilingual Support',
-    description:
-      'Access all features in your preferred language. FinSaathi supports a wide range of Indian regional languages.',
+    icon: <Newspaper className="size-10 text-primary" />,
+    title: 'Live Market Data',
+    description: 'Stay on top of market trends with live stock charts and the latest financial news impacting your portfolio.',
   },
   {
     icon: <Target className="size-10 text-primary" />,

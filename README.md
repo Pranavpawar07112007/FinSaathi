@@ -18,6 +18,7 @@ FinSaathi leverages cutting-edge AI to deliver features that go far beyond tradi
 ### 3. Comprehensive Financial Tooling
 - **Complete Tracking:** Manage transactions, accounts, budgets, investments (including stocks, crypto, and deposits), debts, and savings goals all in one place.
 - **Debt Pay-down Planner:** Generate personalized debt pay-down plans using "Avalanche" or "Snowball" strategies to become debt-free faster.
+- **Live Market Data:** Stay on top of market trends with live stock charts and the latest financial news impacting your portfolio.
 - **Gamification:** Earn points and achievements for building healthy financial habits, making personal finance engaging and rewarding.
 - **Real-time Translation:** Instantly switch the application's language to a wide range of Indian regional languages, making personal finance accessible to everyone.
 
@@ -87,29 +88,34 @@ Track and manage your investment portfolio.
 - **AI Market Alerts**: The AI fetches and displays relevant, recent news for your investments, classifying each item as an 'Opportunity', 'Risk', or 'Neutral' event.
 - **Performance Tracking**: See the overall return on your investments where applicable (e.g., for stocks with a purchase price).
 
-### 8. Debts (`/debts`)
+### 8. Stock Market (`/stock-market`)
+Stay on top of market trends.
+- **Live Market Chart**: An interactive TradingView chart showing real-time stock data for various symbols.
+- **Latest News**: A feed of the latest general financial news impacting the market, powered by Finnhub.
+
+### 9. Debts (`/debts`)
 Plan your path to becoming debt-free.
 - **Debt Management**: Track all your debts, including credit cards, personal loans, home loans, and more.
 - **AI Debt Pay-down Planner**: Generate a personalized, step-by-step monthly payment plan using either the "Avalanche" (highest interest first) or "Snowball" (smallest balance first) strategy.
 - **Amortization Schedule**: For any loan, view a detailed month-by-month amortization schedule to see how your payments are allocated between principal and interest.
 
-### 9. Goals (`/goals`)
+### 10. Goals (`/goals`)
 Save for what matters most.
 - **Create & Manage Goals**: Set savings goals with a target amount and track your progress.
 - **AI Goal Creation**: Describe your goal in natural language (e.g., "I want to save for a trip to Europe"), and the AI will automatically create a named goal with an estimated target amount.
 - **Add Funds**: Easily contribute to your goals by transferring funds from your linked accounts. This automatically creates the corresponding transaction.
 
-### 10. Tax Center (`/tax-center`)
+### 11. Tax Center (`/tax-center`)
 Simplify your tax preparation.
 - **Centralized View**: All transactions flagged as "potentially tax-deductible" by the AI are collected here.
 - **Filter and Export**: Filter your deductible expenses by category and time period, and export the list as a CSV file for easy tax filing.
 
-### 11. AI Advice & Chatbot (`/advice`, `/chatbot`)
+### 12. AI Advice & Chatbot (`/advice`, `/chatbot`)
 Your personal financial expert, available 24/7.
 - **Personalized Advice**: Receive tailored financial advice based on your risk tolerance, goals, and complete financial data. The AI learns from your feedback to improve its recommendations over time.
 - **Conversational Chat**: Ask complex questions about your finances in plain language (e.g., "Compare my spending on food this month vs. last month") and get instant, data-driven answers.
 
-### 12. Profile & Settings (`/profile`, `/settings`)
+### 13. Profile & Settings (`/profile`, `/settings`)
 Manage your account and preferences.
 - **Profile Management**: Update your name and profile picture.
 - **Language Selection**: Choose your preferred language for the application interface.

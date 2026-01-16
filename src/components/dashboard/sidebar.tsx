@@ -22,7 +22,6 @@ import {
 import { SheetClose } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import React from 'react';
-import { useIsMobile } from '@/hooks/use-mobile';
 
 const menuItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },

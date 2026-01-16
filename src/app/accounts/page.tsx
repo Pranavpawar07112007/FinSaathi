@@ -112,7 +112,7 @@ export default function AccountsPage() {
                   return (
                     <AnimatedSection key={account.id} delay={index * 0.1}>
                         <Card
-                        className="hover:shadow-lg transition-shadow duration-300 min-w-[300px] md:min-w-0 h-full"
+                        className="min-w-[300px] md:min-w-0 h-full"
                         >
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium flex items-center gap-2">

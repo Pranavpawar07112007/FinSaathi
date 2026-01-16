@@ -257,7 +257,7 @@ export default function Header() {
         isScrolled ? 'top-0' : 'top-4'
       )}
     >
-      <div className={cn('flex h-16 items-center gap-4 border bg-card/75 px-4 backdrop-blur-xl sm:px-6 transition-all duration-300',
+      <div className={cn('flex h-16 items-center gap-4 border bg-card/85 px-4 backdrop-blur-xl sm:px-6 transition-all duration-300',
          isScrolled ? 'rounded-none' : 'mx-4 rounded-2xl shadow-sm'
       )}>
         <Sheet>

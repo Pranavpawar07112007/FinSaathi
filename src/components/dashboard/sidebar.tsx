@@ -65,7 +65,7 @@ export function Sidebar({ isInSheet = false }: { isInSheet?: boolean }) {
   );
 
   return (
-    <div className="flex h-full flex-col gap-2 rounded-2xl border bg-card/75 shadow-sm backdrop-blur-xl">
+    <div className="flex h-full flex-col gap-2 rounded-2xl border bg-card/85 shadow-sm backdrop-blur-xl">
       <div className="flex h-16 items-center border-b px-6">
         <Link href="/" className="flex items-center gap-2 font-semibold">
           <CircleDollarSign className="h-6 w-6" />

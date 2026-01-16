@@ -21,7 +21,6 @@ import {
 } from 'lucide-react';
 import { SheetClose } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
-import { useIsMobile } from '@/hooks/use-mobile';
 import React from 'react';
 
 const menuItems = [
@@ -40,9 +39,8 @@ const menuItems = [
   { href: '/chatbot', label: 'AI Chatbot', icon: MessageCircle },
 ];
 
-export function Sidebar() {
+export function Sidebar({ isInSheet = false }: { isInSheet?: boolean }) {
   const pathname = usePathname();
-  const isMobile = useIsMobile();
 
   return (
     <div className="flex h-full flex-col gap-2 rounded-2xl border bg-background shadow-sm">
@@ -55,7 +53,7 @@ export function Sidebar() {
         <div className="flex-1 overflow-auto py-2">
             <nav className="grid items-start px-4 text-sm font-medium">
             {menuItems.map((item) =>
-              isMobile ? (
+              isInSheet ? (
                 <SheetClose asChild key={item.label}>
                   <Link
                     href={item.href}

@@ -1,4 +1,3 @@
-
 'use client';
 
 import Image from 'next/image';
@@ -263,13 +262,13 @@ export default function Header() {
       )}>
         <Sheet>
           <SheetTrigger asChild>
-            <Button variant="outline" size="icon" className="shrink-0 lg:hidden">
+            <Button variant="outline" size="icon" className="shrink-0">
               <Menu className="h-5 w-5" />
               <span className="sr-only">Toggle navigation menu</span>
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="flex flex-col p-0">
-            <Sidebar />
+            <Sidebar isInSheet={true} />
           </SheetContent>
         </Sheet>
         

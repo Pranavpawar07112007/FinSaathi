@@ -13,6 +13,10 @@ export const metadata: Metadata = {
   title: 'FinSaathi - Your Financial Companion',
   description:
     'Take control of your finances with FinSaathi. Track expenses, manage budgets, and get personalized AI-powered advice.',
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+  },
 };
 
 

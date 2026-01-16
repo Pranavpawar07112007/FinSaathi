@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Button } from '@/components/ui/button';
@@ -150,20 +149,10 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="flex min-h-screen w-full flex-col bg-background">
+    <div className="flex min-h-screen w-full flex-col bg-transparent">
       {/* Hero Section */}
-      <section className="relative flex flex-col items-center justify-center gap-6 px-4 py-20 text-center md:py-32 overflow-hidden">
-        <Image
-          src="https://images.unsplash.com/photo-1554224155-6726b3ff858f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxmaW5hbmNlJTIwYWJzdHJhY3R8ZW58MHx8fHwxNzYzOTY4NjM4fDA&ixlib=rb-4.1.0&q=80&w=1080"
-          alt="AI in Finance background"
-          fill
-          style={{ objectFit: 'cover' }}
-          className="absolute inset-0 z-0"
-          priority
-        />
-        <div className="absolute inset-0 z-10 bg-black/60"></div>
-
-        <div className="relative z-20 max-w-3xl text-white">
+      <section className="flex flex-col items-center justify-center gap-6 px-4 py-20 text-center md:py-32 overflow-hidden">
+        <div className="max-w-3xl text-foreground">
           <motion.h1
             className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl"
             variants={sentence}
@@ -178,7 +167,7 @@ export default function LandingPage() {
             <span className="text-primary">.</span>
           </motion.h1>
           <motion.p
-            className="mx-auto mt-4 max-w-[700px] text-lg text-gray-200 md:text-xl"
+            className="mx-auto mt-4 max-w-[700px] text-lg text-muted-foreground md:text-xl"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 2.5, duration: 0.5 }}
@@ -192,7 +181,6 @@ export default function LandingPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 2.8, duration: 0.5 }}
-          className="relative z-20"
         >
           <Button asChild size="lg">
             <Link href="/dashboard">
@@ -256,7 +244,7 @@ export default function LandingPage() {
 
       {/* How It Works Section */}
       <AnimatedSection>
-        <section className="bg-muted/50 py-20 md:py-32">
+        <section className="py-20 md:py-32">
           <div className="container mx-auto px-4 md:px-6">
             <div className="mb-12 text-center">
               <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">
@@ -306,7 +294,7 @@ export default function LandingPage() {
 
       {/* Comparison Table Section */}
       <AnimatedSection>
-        <section className="bg-muted/50 py-20 md:py-32">
+        <section className="py-20 md:py-32">
           <div className="container mx-auto px-4 md:px-6">
             <div className="mb-12 text-center">
               <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">
@@ -421,7 +409,7 @@ export default function LandingPage() {
 
       {/* Trust & Security Section */}
       <AnimatedSection>
-        <section className="bg-muted/50 py-20 md:py-32">
+        <section className="py-20 md:py-32">
           <div className="container mx-auto grid items-center gap-12 px-4 md:grid-cols-2 md:px-6">
             <div>
               <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">

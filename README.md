@@ -19,6 +19,12 @@ FinSaathi leverages cutting-edge AI to deliver features that go far beyond tradi
 - **Complete Tracking:** Manage transactions, accounts, budgets, investments (including stocks, crypto, and deposits), debts, and savings goals all in one place.
 - **Debt Pay-down Planner:** Generate personalized debt pay-down plans using "Avalanche" or "Snowball" strategies to become debt-free faster.
 - **Gamification:** Earn points and achievements for building healthy financial habits, making personal finance engaging and rewarding.
+- **Real-time Translation:** Instantly switch the application's language to a wide range of Indian regional languages, making personal finance accessible to everyone.
+
+### 4. Modern User Experience
+- **Stunning Frosted Glass UI:** A beautiful, modern interface featuring a dynamic, multi-color blurred background and semi-transparent "frosted glass" elements that create a sense of depth and a premium user experience across the entire app.
+- **Responsive Design:** A fully responsive layout that works seamlessly on desktop, tablet, and mobile devices.
+- **Light & Dark Modes:** Choose between a light or dark theme to suit your preference.
 
 ## Features by Page
 
@@ -112,7 +118,7 @@ Manage your account and preferences.
 ## Tech Stack & Architecture
 
 - **Frontend:** [Next.js](https://nextjs.org/) with [React](https://reactjs.org/) and [TypeScript](https://www.typescriptlang.org/).
-- **UI:** [ShadCN UI](https://ui.shadcn.com/) components with [Tailwind CSS](https://tailwindcss.com/) for a modern, responsive design.
+- **UI:** A custom-themed interface built with [ShadCN UI](https://ui.shadcn.com/) and [Tailwind CSS](https://tailwindcss.com/). The app features a modern "frosted glass" aesthetic with dynamic, blurred background gradients and semi-transparent elements for a premium look and feel.
 - **Backend & Database:** [Google Firebase](https://firebase.google.com/) for Authentication (Firebase Auth), Database (Firestore), and File Storage (Firebase Storage).
 - **Generative AI:** Google's powerful [Gemini](https://deepmind.google/technologies/gemini/) models, orchestrated via [Genkit](https://firebase.google.com/docs/genkit), Google's open-source AI framework.
 

@@ -139,7 +139,10 @@ export default function ChatbotPage() {
   useEffect(() => {
     async function fetchNews() {
       setIsLoadingNews(true);
-      const news = await getMarketNews('general');
+      const { news, error } = await getMarketNews('general');
+      if (error) {
+          console.error("Failed to load market news for chatbot:", error);
+      }
       setMarketNews(news.slice(0, 5)); // Get top 5 news items for context
       setIsLoadingNews(false);
     }

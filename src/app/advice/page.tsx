@@ -65,7 +65,10 @@ export default function AdvicePage() {
   useEffect(() => {
     async function fetchNews() {
       setIsLoadingNews(true);
-      const news = await getMarketNews('general');
+      const { news, error } = await getMarketNews('general');
+      if (error) {
+          console.error("Failed to load market news for advice page:", error);
+      }
       setMarketNews(news.slice(0, 10)); // Get top 10 news items
       setIsLoadingNews(false);
     }

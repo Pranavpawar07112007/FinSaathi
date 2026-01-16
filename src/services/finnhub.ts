@@ -19,14 +19,15 @@ const FINNHUB_BASE_URL = 'https://finnhub.io/api/v1';
 /**
  * Fetches market news from Finnhub.
  * @param category - The category of news to fetch (e.g., 'general', 'forex', 'crypto', 'merger').
- * @returns A promise that resolves to an array of news items.
+ * @returns A promise that resolves to an object with news items and an optional error.
  */
 export async function getMarketNews(
   category: string
-): Promise<MarketNewsItem[]> {
-  if (!FINNHUB_API_KEY) {
-    console.error('Finnhub API key is not configured.');
-    return [];
+): Promise<{ news: MarketNewsItem[]; error?: string }> {
+  if (!FINNHUB_API_KEY || FINNHUB_API_KEY === 'd5keajpr01qitje46aa0d5keajpr01qitje46aag') {
+    const errorMsg = 'Finnhub API key is not configured or is invalid.';
+    console.error(errorMsg);
+    return { news: [], error: errorMsg };
   }
 
   try {
@@ -34,14 +35,22 @@ export async function getMarketNews(
     const response = await fetch(url, { next: { revalidate: 3600 } }); // Cache for 1 hour
 
     if (!response.ok) {
-      console.error(`Finnhub API error: ${response.statusText}`);
-      return [];
+      const errorText = await response.text();
+      const errorMsg = `Finnhub API error: ${response.status} ${response.statusText}. Response: ${errorText}`;
+      console.error(errorMsg);
+      return { news: [], error: `Could not connect to news service. Please check your API key.` };
     }
 
-    const news = await response.json();
-    return news as MarketNewsItem[];
+    const newsData = await response.json();
+    if (!Array.isArray(newsData)) {
+      const errorMsg = 'Unexpected response format from Finnhub API.';
+      console.error(errorMsg, newsData);
+      return { news: [], error: errorMsg };
+    }
+    return { news: newsData as MarketNewsItem[] };
   } catch (error) {
-    console.error('Error fetching market news from Finnhub:', error);
-    return [];
+    const errorMsg = 'Network error fetching market news from Finnhub.';
+    console.error(errorMsg, error);
+    return { news: [], error: errorMsg };
   }
 }

@@ -16,6 +16,10 @@ export default {
       },
     },
     extend: {
+      boxShadow: {
+        'card': '0 2px 8px 0 rgba(100, 116, 139, 0.12)',
+        'card-hover': '0 8px 24px 0 rgba(100, 116, 139, 0.2)',
+      },
       fontFamily: {
         body: ['Inter', 'sans-serif'],
         headline: ['Inter', 'sans-serif'],

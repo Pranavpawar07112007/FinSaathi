@@ -16,12 +16,14 @@ import TradingViewWidget from '@/components/trading-view-widget';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { useTheme } from 'next-themes';
 
 function StockMarketPage() {
   const [marketNews, setMarketNews] = useState<MarketNewsItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [visibleNewsCount, setVisibleNewsCount] = useState(4);
+  const { resolvedTheme } = useTheme();
 
   useEffect(() => {
     async function fetchNews() {
@@ -147,7 +149,7 @@ function StockMarketPage() {
         </CardHeader>
         <CardContent>
           <div className="h-[500px] w-full mb-8">
-            <TradingViewWidget />
+            <TradingViewWidget key={resolvedTheme} />
           </div>
 
           <h2 className="text-2xl font-bold tracking-tight mb-4">Market News</h2>

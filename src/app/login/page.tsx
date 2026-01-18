@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { CircleDollarSign, Chrome, AlertTriangle } from 'lucide-react';
+import { Chrome, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 import { initiateEmailSignIn, useAuth, initiateGoogleSignIn, useUser } from '@/firebase';
 import { FormEventHandler, useEffect, useState } from 'react';
@@ -19,6 +19,7 @@ import { Separator } from '@/components/ui/separator';
 import { useRouter } from 'next/navigation';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ForgotPasswordDialog } from '@/components/forgot-password-dialog';
+import Image from 'next/image';
 
 export default function LoginPage() {
   const auth = useAuth();
@@ -76,7 +77,7 @@ export default function LoginPage() {
         <form onSubmit={handleLogin}>
           <CardHeader className="space-y-1 text-center">
             <div className="inline-flex items-center justify-center gap-2">
-              <CircleDollarSign className="size-8" />
+              <Image src="/favicon.ico" alt="FinSaathi Logo" width={32} height={32} />
               <CardTitle className="text-3xl">FinSaathi</CardTitle>
             </div>
             <CardDescription>

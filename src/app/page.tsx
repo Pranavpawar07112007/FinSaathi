@@ -453,7 +453,7 @@ export default function LandingPage() {
       <footer className="border-t py-6">
         <div className="container mx-auto flex flex-col items-center justify-between gap-4 px-4 md:flex-row md:px-6">
           <div className="flex items-center gap-2 font-semibold">
-            <Bot className="h-6 w-6" />
+            <Image src="/favicon.ico" alt="FinSaathi Logo" width={24} height={24} />
             <span className="">FinSaathi</span>
           </div>
           <p className="text-sm text-muted-foreground">

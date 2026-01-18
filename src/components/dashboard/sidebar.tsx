@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import Image from 'next/image';
 import {
-  CircleDollarSign,
   LayoutDashboard,
   ArrowRightLeft,
   PieChart,
@@ -67,7 +67,7 @@ export function Sidebar({ isInSheet = false }: { isInSheet?: boolean }) {
     <div className="flex h-full flex-col gap-2 rounded-2xl border bg-card/85 shadow-sm backdrop-blur-xl">
       <div className="flex h-16 items-center border-b px-6">
         <Link href="/" className="flex items-center gap-2 font-semibold">
-          <CircleDollarSign className="h-6 w-6" />
+          <Image src="/favicon.ico" alt="FinSaathi Logo" width={24} height={24} />
           <span className="">FinSaathi</span>
         </Link>
       </div>

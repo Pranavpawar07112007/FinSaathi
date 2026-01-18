@@ -12,6 +12,7 @@ export function SplashScreen() {
       transition={{ duration: 0.5, delay: 2.5 }}
     >
       <motion.div
+        className="rounded-full overflow-hidden"
         initial={{ scale: 1 }}
         animate={{ scale: [1, 1.2, 1, 120] }}
         transition={{

@@ -1,8 +1,7 @@
-
 'use client';
 
 import { motion } from 'framer-motion';
-import { CircleDollarSign } from 'lucide-react';
+import Image from 'next/image';
 
 export function SplashScreen() {
   return (
@@ -21,7 +20,7 @@ export function SplashScreen() {
           ease: "easeInOut",
         }}
       >
-        <CircleDollarSign className="h-24 w-24 text-primary" />
+        <Image src="/favicon.ico" alt="FinSaathi App Logo" width={96} height={96} />
       </motion.div>
     </motion.div>
   );

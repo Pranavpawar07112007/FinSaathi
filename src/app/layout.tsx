@@ -45,11 +45,11 @@ export default function RootLayout({
           className="fixed inset-0 -z-10 overflow-hidden"
           aria-hidden="true"
         >
-          <div className="absolute -top-16 -left-16 h-[32rem] w-[32rem] rounded-full bg-primary/20 blur-3xl" />
-          <div className="absolute -bottom-16 -right-16 h-[32rem] w-[32rem] rounded-full bg-accent/20 blur-3xl" />
-          <div className="absolute top-1/2 left-1/2 h-[24rem] w-[24rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-chart-3/20 blur-3xl" />
-          <div className="absolute -bottom-24 left-1/4 h-[28rem] w-[28rem] rounded-full bg-chart-4/20 blur-3xl" />
-          <div className="absolute -top-24 right-1/4 h-[28rem] w-[28rem] rounded-full bg-chart-5/20 blur-3xl" />
+          <div className="absolute -top-16 -left-16 h-[20rem] w-[20rem] rounded-full bg-primary/30 blur-3xl animate-move-circle-1" />
+          <div className="absolute -bottom-16 -right-16 h-[20rem] w-[20rem] rounded-full bg-accent/30 blur-3xl animate-move-circle-2" />
+          <div className="absolute top-1/2 left-1/2 h-[18rem] w-[18rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-chart-3/30 blur-3xl animate-move-circle-3" />
+          <div className="absolute -bottom-24 left-1/4 h-[16rem] w-[16rem] rounded-full bg-chart-4/30 blur-3xl animate-move-circle-4" />
+          <div className="absolute -top-24 right-1/4 h-[16rem] w-[16rem] rounded-full bg-chart-5/30 blur-3xl animate-move-circle-5" />
         </div>
         <ThemeProvider
           attribute="class"

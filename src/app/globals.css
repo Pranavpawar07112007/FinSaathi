@@ -7,6 +7,27 @@ body {
   overflow-x: hidden;
 }
 
+.chatbot-response p:not(:last-child) {
+  margin-bottom: 0.75rem;
+}
+.chatbot-response ul,
+.chatbot-response ol {
+  margin-left: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+.chatbot-response ul {
+  list-style-type: disc;
+}
+.chatbot-response ol {
+  list-style-type: decimal;
+}
+.chatbot-response li {
+  padding-left: 0.5rem;
+}
+.chatbot-response li:not(:last-child) {
+  margin-bottom: 0.25rem;
+}
+
 @layer base {
   :root {
     --background: 35 100% 97%;

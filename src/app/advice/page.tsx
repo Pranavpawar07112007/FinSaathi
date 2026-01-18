@@ -312,9 +312,10 @@ export default function AdvicePage() {
                     </div>
                 )}
                 {!isSubmitting && state.message === 'success' && state.advice && state.adviceId && (
-                    <div className="prose prose-sm max-w-none text-foreground whitespace-pre-wrap">
-                    {state.advice}
-                    </div>
+                    <div
+                      className="chatbot-response prose prose-sm max-w-none text-foreground"
+                      dangerouslySetInnerHTML={{ __html: state.advice }}
+                    />
                 )}
                 {!isSubmitting && !state.advice && !state.message && (
                     <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">

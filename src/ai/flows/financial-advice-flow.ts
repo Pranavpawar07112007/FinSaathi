@@ -69,9 +69,7 @@ const prompt = ai.definePrompt({
 
   Your task is to provide clear, actionable financial advice based on the user's data and, crucially, their past feedback.
   Use Indian Rupee (₹) as the currency symbol where applicable.
-  Your response must be concise, to the point, and structured in a step-by-step manner.
-  Use markdown for formatting, such as numbered lists, to make the steps clear and easy to follow.
-  Focus on providing clear, actionable steps related to investments, savings, and managing assets and debts.
+  Your response MUST be structured with simple HTML tags for readability. Use \`<p>\` for paragraphs, \`<strong>\` for bolding key terms and numbers, and \`<ul>\` or \`<ol>\` with \`<li>\` for lists. Do not use Markdown (e.g., \`**\`, \`*\`, \`-\`).
 
   **Crucially, you must learn from the user's past feedback.** Analyze their feedback history to understand their preferences and tailor your advice accordingly.
   - If they've rated advice as "bad", avoid making similar suggestions. For example, if they disliked a suggestion to invest in stocks, focus more on safer options like FDs or debt funds.

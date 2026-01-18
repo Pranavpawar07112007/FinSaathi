@@ -53,6 +53,7 @@ const prompt = ai.definePrompt({
 - **Always use Indian Rupee (₹)** as the currency symbol when discussing money.
 - **Be Conversational and Empathetic:** Maintain a friendly, encouraging, and supportive tone.
 - **Acknowledge Data Gaps:** If you don't have the necessary financial data to answer a question, politely say so.
+- **Use HTML for Formatting:** Your response MUST be structured with simple HTML tags for readability. Use \`<p>\` for paragraphs, \`<strong>\` for bolding key terms and numbers, and \`<ul>\` or \`<ol>\` with \`<li>\` for lists. Do not use Markdown (e.g., \`**\`, \`*\`, \`-\`).
 
 ---
 

@@ -71,7 +71,7 @@ export default function ChatbotPage() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'model',
-      content: "Hello! I'm FinSaathi, your personal financial assistant. How can I help you today?",
+      content: "<p>Hello! I'm FinSaathi, your personal financial assistant. How can I help you today?</p>",
     },
   ]);
   
@@ -248,7 +248,7 @@ export default function ChatbotPage() {
     } else if (state.error) {
       setMessages((prev) => [
         ...prev,
-        { role: 'model', content: `Sorry, something went wrong: ${state.error}` },
+        { role: 'model', content: `<p>Sorry, something went wrong: ${state.error}</p>` },
       ]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -280,7 +280,8 @@ export default function ChatbotPage() {
         if (msg.role === 'user') {
           acc.push({ user: msg.content, model: '' });
         } else if (acc.length > 0) {
-          acc[acc.length - 1].model = msg.content;
+          // Strip HTML tags for the history sent to the AI
+          acc[acc.length - 1].model = msg.content.replace(/<[^>]*>?/gm, '');
         }
         return acc;
       }, [] as { user: string; model: string }[]);
@@ -326,10 +327,10 @@ export default function ChatbotPage() {
                       {msg.content.includes('Sorry, something went wrong') ? (
                         <div className="flex items-start gap-2">
                            <AlertTriangle className="size-4 mt-0.5"/>
-                           <p>{msg.content}</p>
+                           <div className="chatbot-response" dangerouslySetInnerHTML={{ __html: msg.content }} />
                         </div>
                       ) : (
-                        <p>{msg.content}</p>
+                        <div className="chatbot-response" dangerouslySetInnerHTML={{ __html: msg.content }} />
                       )}
                     </div>
                      {msg.role === 'user' && (

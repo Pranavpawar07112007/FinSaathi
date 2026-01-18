@@ -1,4 +1,3 @@
-
 'use client';
 
 import { usePathname } from 'next/navigation';
@@ -27,7 +26,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
       <aside className="hidden lg:block sticky top-0 h-screen p-4">
         <Sidebar isInSheet={false} />
       </aside>
-      <div className="flex flex-col">
+      <div className="flex flex-col overflow-x-hidden">
         <Header />
         {children}
       </div>

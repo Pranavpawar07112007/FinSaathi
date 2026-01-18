@@ -52,13 +52,13 @@ export default function RootLayout({
           <div className="absolute -bottom-24 left-1/4 h-[11rem] w-[11rem] rounded-full bg-chart-4/20 blur-3xl animate-move-circle-4" />
           <div className="absolute -top-24 right-1/4 h-[11rem] w-[11rem] rounded-full bg-chart-5/20 blur-3xl animate-move-circle-5" />
         </div>
-        <AppLoader>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <AppLoader>
             <FirebaseClientProvider>
               <AppLayout>
                 <main className="flex-1 overflow-x-hidden">
@@ -67,8 +67,8 @@ export default function RootLayout({
               </AppLayout>
               <Toaster />
             </FirebaseClientProvider>
-          </ThemeProvider>
-        </AppLoader>
+          </AppLoader>
+        </ThemeProvider>
       </body>
     </html>
   );

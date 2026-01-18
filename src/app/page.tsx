@@ -54,12 +54,15 @@ const features = [
     icon: <Newspaper className="size-10 text-primary" />,
     title: 'Live Market Data',
     description: 'Stay on top of market trends with live stock charts and the latest financial news impacting your portfolio.',
+<<<<<<< HEAD
   },
    {
     icon: <Languages className="size-10 text-primary" />,
     title: 'Multilingual Support',
     description:
       'Access all features in your preferred language. FinSaathi supports a wide range of Indian regional languages.',
+=======
+>>>>>>> 79461a1c61a47dd521cd68d0f6552f40a5e4651a
   },
   {
     icon: <Target className="size-10 text-primary" />,

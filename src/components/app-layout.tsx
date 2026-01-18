@@ -27,7 +27,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
       <aside className="hidden lg:block sticky top-0 h-screen p-4">
         <Sidebar isInSheet={false} />
       </aside>
-      <div className="flex flex-col overflow-x-hidden">
+      <div className="flex flex-col">
         <Header />
         {children}
       </div>

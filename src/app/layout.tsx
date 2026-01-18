@@ -7,6 +7,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { PageTransition } from '@/components/page-transition';
 import { AppLayout } from '@/components/app-layout';
 import Script from 'next/script';
+import { AppLoader } from '@/components/app-loader';
 
 
 export const metadata: Metadata = {
@@ -45,27 +46,29 @@ export default function RootLayout({
           className="fixed inset-0 -z-10 overflow-hidden"
           aria-hidden="true"
         >
-          <div className="absolute -top-16 -left-16 h-[15rem] w-[15rem] rounded-full bg-primary/30 blur-3xl animate-move-circle-1" />
-          <div className="absolute -bottom-16 -right-16 h-[15rem] w-[15rem] rounded-full bg-accent/30 blur-3xl animate-move-circle-2" />
-          <div className="absolute top-1/2 left-1/2 h-[14rem] w-[14rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-chart-3/30 blur-3xl animate-move-circle-3" />
-          <div className="absolute -bottom-24 left-1/4 h-[13rem] w-[13rem] rounded-full bg-chart-4/30 blur-3xl animate-move-circle-4" />
-          <div className="absolute -top-24 right-1/4 h-[13rem] w-[13rem] rounded-full bg-chart-5/30 blur-3xl animate-move-circle-5" />
+          <div className="absolute -top-16 -left-16 h-[13rem] w-[13rem] rounded-full bg-primary/20 blur-3xl animate-move-circle-1" />
+          <div className="absolute -bottom-16 -right-16 h-[13rem] w-[13rem] rounded-full bg-accent/20 blur-3xl animate-move-circle-2" />
+          <div className="absolute top-1/2 left-1/2 h-[12rem] w-[12rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-chart-3/20 blur-3xl animate-move-circle-3" />
+          <div className="absolute -bottom-24 left-1/4 h-[11rem] w-[11rem] rounded-full bg-chart-4/20 blur-3xl animate-move-circle-4" />
+          <div className="absolute -top-24 right-1/4 h-[11rem] w-[11rem] rounded-full bg-chart-5/20 blur-3xl animate-move-circle-5" />
         </div>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <FirebaseClientProvider>
-            <AppLayout>
-              <main className="flex-1 overflow-x-hidden">
-                <PageTransition>{children}</PageTransition>
-              </main>
-            </AppLayout>
-            <Toaster />
-          </FirebaseClientProvider>
-        </ThemeProvider>
+        <AppLoader>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <FirebaseClientProvider>
+              <AppLayout>
+                <main className="flex-1 overflow-x-hidden">
+                  <PageTransition>{children}</PageTransition>
+                </main>
+              </AppLayout>
+              <Toaster />
+            </FirebaseClientProvider>
+          </ThemeProvider>
+        </AppLoader>
       </body>
     </html>
   );

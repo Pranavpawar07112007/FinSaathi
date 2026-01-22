@@ -14,8 +14,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { AlertTriangle, Loader2, Sparkles } from 'lucide-react';
 import { extractKeywordFromDescriptions } from '@/ai/flows/extract-keyword-flow';
-import { saveRuleAction } from '@/app/transactions/rules.actions';
-import { useUser } from '@/firebase';
+import { useUser, useFirestore, setDocumentNonBlocking } from '@/firebase';
+import { doc, Timestamp } from 'firebase/firestore';
 import type { WithId } from '@/firebase/firestore/use-collection';
 import type { Transaction } from '@/app/transactions/page';
 
@@ -34,6 +34,7 @@ export function CreateRuleDialog({
 }: CreateRuleDialogProps) {
   const { user } = useUser();
   const { toast } = useToast();
+  const firestore = useFirestore();
   const [isExtracting, setIsExtracting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -61,17 +62,34 @@ export function CreateRuleDialog({
   }, [isOpen, transactions, newCategory]);
 
   const handleConfirm = async () => {
-    if (!user || !keyword || !newCategory) {
+    if (!user || !firestore || !keyword || !newCategory) {
         toast({ variant: 'destructive', title: 'Error', description: 'Missing required information to create a rule.' });
         return;
     }
     setIsSaving(true);
     setError(null);
     try {
-        const result = await saveRuleAction({ userId: user.uid, keyword, category: newCategory });
-        if (!result.success) {
-            throw new Error(result.error);
-        }
+        const simpleHash = (str: string): string => {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
+                hash = (hash << 5) - hash + char;
+                hash |= 0; // Convert to 32bit integer
+            }
+            return Math.abs(hash).toString(36);
+        };
+        const ruleId = simpleHash(keyword.toLowerCase());
+        
+        const ruleRef = doc(firestore, `users/${user.uid}/categorizationRules/${ruleId}`);
+        
+        setDocumentNonBlocking(ruleRef, {
+            id: ruleId,
+            userId: user.uid,
+            keyword,
+            category: newCategory,
+            createdAt: Timestamp.now(),
+        }, { merge: false });
+
         toast({
             title: 'Rule Created!',
             description: `Future transactions containing "${keyword}" will be categorized as "${newCategory}".`,
@@ -79,6 +97,7 @@ export function CreateRuleDialog({
         handleClose();
     } catch (e: any) {
         setError(e.message || 'An unknown error occurred while saving the rule.');
+        console.error("Error creating rule:", e);
     } finally {
         setIsSaving(false);
     }
@@ -96,7 +115,7 @@ export function CreateRuleDialog({
   };
   
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">

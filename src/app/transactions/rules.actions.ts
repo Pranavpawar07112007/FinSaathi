@@ -3,7 +3,6 @@
 import { z } from 'zod';
 import { getFirebaseApp } from '@/firebase/server-app';
 import { Timestamp } from 'firebase-admin/firestore';
-import { createHash } from 'crypto';
 
 const saveRuleSchema = z.object({
   userId: z.string(),
@@ -25,8 +24,18 @@ export async function saveRuleAction(
   const { userId, keyword, category } = validatedFields.data;
   const { firestore } = getFirebaseApp();
 
-  // Create a consistent ID based on the keyword to prevent duplicates.
-  const ruleId = createHash('md5').update(keyword.toLowerCase()).digest('hex');
+  // Create a consistent, environment-agnostic ID based on the keyword to prevent duplicates.
+  const simpleHash = (str: string): string => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        const char = str.charCodeAt(i);
+        hash = (hash << 5) - hash + char;
+        hash &= hash; // Convert to 32bit integer
+    }
+    return Math.abs(hash).toString(36);
+  };
+  const ruleId = simpleHash(keyword.toLowerCase());
+  
   const ruleRef = firestore.doc(
     `users/${userId}/categorizationRules/${ruleId}`
   );

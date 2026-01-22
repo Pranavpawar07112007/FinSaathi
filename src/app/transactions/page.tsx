@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Trash2, Pencil, FilterX, FileDown, HelpCircle, ShieldCheck, ArrowRightLeft, Upload, Loader2 } from 'lucide-react';
+import { PlusCircle, Trash2, Pencil, FilterX, FileDown, HelpCircle, ShieldCheck, ArrowRightLeft, Upload, Loader2, Target } from 'lucide-react';
 import { AddTransactionDialog } from '@/components/transactions/add-transaction-dialog';
 import {
   useCollection,
@@ -48,6 +48,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { DeleteMultipleTransactionsDialog } from '@/components/transactions/delete-multiple-transactions-dialog';
 import { BulkEditCategoryDialog } from '@/components/transactions/bulk-edit-category-dialog';
 import { useToast } from '@/hooks/use-toast';
+import { BulkAssignGoalDialog } from '@/components/transactions/bulk-assign-goal-dialog';
 
 
 export interface Transaction {
@@ -66,6 +67,14 @@ export interface Transaction {
   isTaxDeductible?: boolean;
 }
 
+export interface Goal {
+    name: string;
+    targetAmount: number;
+    currentAmount: number;
+    userId: string;
+    targetDate?: string;
+}
+
 const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December'
@@ -78,6 +87,7 @@ export default function TransactionsPage() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleteMultipleDialogOpen, setIsDeleteMultipleDialogOpen] = useState(false);
   const [isBulkEditDialogOpen, setIsBulkEditDialogOpen] = useState(false);
+  const [isAssignGoalOpen, setIsAssignGoalOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<WithId<Transaction> | null>(null);
   const [isMarkingTax, setIsMarkingTax] = useState(false);
@@ -122,11 +132,22 @@ export default function TransactionsPage() {
   }, [user, firestore]);
 
   const { data: accounts, isLoading: isLoadingAccounts } = useCollection<Account>(accountsQuery);
+  
+  const goalsQuery = useMemoFirebase(() => {
+    if (!user) return null;
+    return query(collection(firestore, 'users', user.uid, 'goals'));
+  }, [user, firestore]);
+  const { data: goals, isLoading: isLoadingGoals } = useCollection<Goal>(goalsQuery);
 
   const accountsMap = useMemo(() => {
     if (!accounts) return new Map<string, string>();
     return new Map(accounts.map(acc => [acc.id!, acc.name]));
   }, [accounts]);
+
+  const goalsMap = useMemo(() => {
+    if (!goals) return new Map<string, string>();
+    return new Map(goals.map(g => [g.id, g.name]));
+  }, [goals]);
 
 
   const { availableYears, availableCategories } = useMemo(() => {
@@ -242,23 +263,34 @@ export default function TransactionsPage() {
   };
 
   const renderTransactionDetails = (t: WithId<Transaction>) => {
-    if (t.type === 'transfer' && t.fromAccountId && t.toAccountId) {
-      return (
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span>{accountsMap.get(t.fromAccountId) || 'Unknown Account'}</span>
-            <ArrowRightLeft className="size-3"/>
-            <span>{accountsMap.get(t.toAccountId) || 'Unknown Account'}</span>
+    const accountDetail = (() => {
+        if (t.type === 'transfer' && t.fromAccountId && t.toAccountId) {
+          return (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span>{accountsMap.get(t.fromAccountId) || 'Unknown Account'}</span>
+                <ArrowRightLeft className="size-3"/>
+                <span>{accountsMap.get(t.toAccountId) || 'Unknown Account'}</span>
+            </div>
+          );
+        }
+        if (t.accountId) {
+          return (
+            <div className="text-xs text-muted-foreground">
+              {accountsMap.get(t.accountId) || 'Unknown Account'}
+            </div>
+          );
+        }
+        return null;
+    })();
+
+    const goalDetail = t.goalId ? (
+        <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+            <Target className="size-3 text-primary"/>
+            <span>Goal: {goalsMap.get(t.goalId) || 'Unknown'}</span>
         </div>
-      );
-    }
-    if (t.accountId) {
-      return (
-        <div className="text-xs text-muted-foreground">
-          {accountsMap.get(t.accountId) || 'Unknown Account'}
-        </div>
-      );
-    }
-    return null;
+    ) : null;
+    
+    return <>{accountDetail}{goalDetail}</>;
   };
 
   const downloadCSV = () => {
@@ -347,6 +379,10 @@ export default function TransactionsPage() {
                             <Button variant="outline" size="sm" onClick={() => setIsBulkEditDialogOpen(true)} disabled={selectedIds.size === 0}>
                                 <Pencil/>
                                 Edit Category ({selectedIds.size})
+                            </Button>
+                             <Button variant="outline" size="sm" onClick={() => setIsAssignGoalOpen(true)} disabled={selectedIds.size === 0}>
+                                <Target />
+                                Assign to Goal ({selectedIds.size})
                             </Button>
                             <Button variant="outline" size="sm" onClick={handleBulkMarkForTax} disabled={selectedIds.size === 0 || isMarkingTax}>
                                 {isMarkingTax ? <Loader2 className="mr-2 animate-spin" /> : <ShieldCheck />}
@@ -477,21 +513,7 @@ export default function TransactionsPage() {
                             </TableCell>
                         )}
                         <TableCell>
-                            <div className="flex items-center gap-2">
-                                {transaction.isTaxDeductible && (
-                                    <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger>
-                                            <ShieldCheck className="size-4 text-primary" />
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                            <p>Potentially tax-deductible</p>
-                                        </TooltipContent>
-                                    </Tooltip>
-                                    </TooltipProvider>
-                                )}
-                                <div className="font-medium">{transaction.description}</div>
-                            </div>
+                            <div className="font-medium">{transaction.description}</div>
                             {renderTransactionDetails(transaction)}
                         </TableCell>
                         <TableCell>{transaction.date}</TableCell>
@@ -512,6 +534,20 @@ export default function TransactionsPage() {
                         <TableCell className="text-right">
                             {!isSelectionMode && (
                                 <div className="flex justify-end gap-2">
+                                     <TooltipProvider>
+                                        {transaction.isTaxDeductible && (
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <div className='p-2'>
+                                                    <ShieldCheck className="size-4 text-primary" />
+                                                    </div>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p>Potentially tax-deductible</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        )}
+                                    </TooltipProvider>
                                     <Button
                                         variant="ghost"
                                         size="icon"
@@ -565,6 +601,16 @@ export default function TransactionsPage() {
         isOpen={isDeleteMultipleDialogOpen}
         setIsOpen={setIsDeleteMultipleDialogOpen}
         transactions={selectedTransactions}
+        onConfirm={() => {
+            setIsSelectionMode(false);
+            setSelectedIds(new Set());
+        }}
+      />
+       <BulkAssignGoalDialog
+        isOpen={isAssignGoalOpen}
+        setIsOpen={setIsAssignGoalOpen}
+        transactions={selectedTransactions}
+        goals={goals || []}
         onConfirm={() => {
             setIsSelectionMode(false);
             setSelectedIds(new Set());

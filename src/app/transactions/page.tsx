@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -54,6 +53,12 @@ import { useToast } from '@/hooks/use-toast';
 import { BulkAssignGoalDialog } from '@/components/transactions/bulk-assign-goal-dialog';
 import { CreateRuleDialog } from '@/components/transactions/create-rule-dialog';
 import { ToastAction } from '@/components/ui/toast';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 
 export interface Transaction {
@@ -461,14 +466,24 @@ export default function TransactionsPage() {
                         Import Transactions
                     </Button>
                     <div className="flex items-center gap-1">
-                        <Button variant="outline" size="sm" onClick={downloadCSV}>
-                            <FileDown />
-                            Download as CSV
-                        </Button>
-                         <Button variant="outline" size="sm" onClick={downloadPDF}>
-                            <FileText />
-                            Download as PDF
-                        </Button>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" size="sm">
+                                    <FileDown className="mr-2"/>
+                                    Download
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                                <DropdownMenuItem onClick={downloadCSV}>
+                                    <FileText className="mr-2"/>
+                                    As CSV
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={downloadPDF}>
+                                    <FileText className="mr-2"/>
+                                    As PDF
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                         <Popover>
                             <PopoverTrigger asChild>
                                 <Button variant="ghost" size="icon" className="h-9 w-9">
@@ -759,5 +774,3 @@ export default function TransactionsPage() {
     </div>
   );
 }
-
-    

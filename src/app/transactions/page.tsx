@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -365,20 +366,27 @@ export default function TransactionsPage() {
     const doc = new jsPDF();
     const userEmail = user?.email || 'User';
 
+    // A more reliable way to format currency for PDF rendering
     const formatCurrency = (amount: number) => {
-      return amount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' });
+      return '₹' + amount.toLocaleString('en-IN', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
     };
 
-    // Header
-    doc.setFontSize(20);
-    doc.setTextColor(40);
+    // --- PDF Header ---
+    doc.setFontSize(22);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(34, 47, 62); // Darker text
     doc.text('Transaction Report', 14, 22);
-    doc.setFontSize(11);
-    doc.setTextColor(100);
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(108, 122, 137); // Muted text
     doc.text(`Account: ${userEmail}`, 14, 30);
     doc.text(`Date Generated: ${new Date().toLocaleDateString()}`, 14, 36);
 
-    // Summary
+    // --- Summary Cards ---
     const totalIncome = filteredTransactions
       .filter((t) => t.type === 'income')
       .reduce((acc, t) => acc + t.amount, 0);
@@ -387,22 +395,47 @@ export default function TransactionsPage() {
       .reduce((acc, t) => acc + Math.abs(t.amount), 0);
     const netFlow = totalIncome - totalExpense;
 
-    let summaryY = 50;
-    doc.setFontSize(12);
-    doc.text('Summary for Filtered Period', 14, summaryY);
-    summaryY += 7;
-    doc.setFontSize(10);
-    doc.text(`Total Transactions: ${filteredTransactions.length}`, 14, summaryY);
-    summaryY += 7;
-    doc.text(`Total Income: ${formatCurrency(totalIncome)}`, 14, summaryY);
-    summaryY += 7;
-    doc.text(`Total Expense: ${formatCurrency(totalExpense)}`, 14, summaryY);
-    summaryY += 7;
-    doc.setLineWidth(0.2);
-    doc.line(14, summaryY - 3, 70, summaryY - 3);
-    doc.text(`Net Flow: ${formatCurrency(netFlow)}`, 14, summaryY);
+    const summaryY = 50;
+    const cardWidth = 58;
+    const cardHeight = 25;
+    const cardGap = 5;
 
-    // Table
+    // Income Card
+    doc.setFillColor(236, 250, 236); // Light green
+    doc.rect(14, summaryY, cardWidth, cardHeight, 'F');
+    doc.setFontSize(10);
+    doc.setTextColor(108, 122, 137);
+    doc.text('Total Income', 20, summaryY + 8);
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(39, 174, 96); // Green
+    doc.text(formatCurrency(totalIncome), 20, summaryY + 17);
+
+    // Expense Card
+    doc.setFillColor(254, 236, 236); // Light red
+    doc.rect(14 + cardWidth + cardGap, summaryY, cardWidth, cardHeight, 'F');
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(108, 122, 137);
+    doc.text('Total Expense', 20 + cardWidth + cardGap, summaryY + 8);
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(231, 76, 60); // Red
+    doc.text(formatCurrency(totalExpense), 20 + cardWidth + cardGap, summaryY + 17);
+
+    // Net Flow Card
+    doc.setFillColor(240, 243, 244); // Light gray
+    doc.rect(14 + (cardWidth + cardGap) * 2, summaryY, cardWidth, cardHeight, 'F');
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(108, 122, 137);
+    doc.text('Net Flow', 20 + (cardWidth + cardGap) * 2, summaryY + 8);
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(netFlow >= 0 ? [39, 174, 96] : [231, 76, 60]); // Green or Red
+    doc.text(formatCurrency(netFlow), 20 + (cardWidth + cardGap) * 2, summaryY + 17);
+    
+    // --- Transactions Table ---
     const tableData = filteredTransactions.map((t) => {
       const amountStr = formatCurrency(t.amount);
       return [
@@ -413,19 +446,20 @@ export default function TransactionsPage() {
           content: amountStr,
           styles: {
             halign: 'right',
-            textColor: t.amount < 0 ? [220, 53, 69] : [25, 135, 84],
+            textColor: t.amount < 0 ? [231, 76, 60] : [39, 174, 96],
+            fontStyle: 'bold'
           },
         },
       ];
     });
 
     autoTable(doc, {
-      startY: summaryY + 10,
+      startY: summaryY + cardHeight + 15,
       head: [['Date', 'Description', 'Category', 'Amount']],
       body: tableData,
       theme: 'striped',
       headStyles: {
-        fillColor: [41, 128, 185],
+        fillColor: [34, 47, 62], // Dark Blue/Gray
         textColor: 255,
         fontStyle: 'bold',
       },
@@ -433,14 +467,28 @@ export default function TransactionsPage() {
         fillColor: [245, 245, 245],
       },
       didDrawPage: function (data) {
-        // Footer
+        // --- Footer ---
         const pageCount = doc.internal.getNumberOfPages();
-        doc.setFontSize(10);
+        const pageWidth = doc.internal.pageSize.width;
+        doc.setFontSize(9);
         doc.setTextColor(150);
+        
+        // Draw line
+        doc.setLineWidth(0.2);
+        doc.line(14, doc.internal.pageSize.height - 15, pageWidth - 14, doc.internal.pageSize.height - 15);
+
+        // Page number
         doc.text(
           `Page ${data.pageNumber} of ${pageCount}`,
-          data.settings.margin.left,
-          doc.internal.pageSize.height - 10
+          pageWidth / 2,
+          doc.internal.pageSize.height - 10,
+          { align: 'center' }
+        );
+        // Generated by text
+        doc.text(
+            'Generated by FinSaathi',
+            14,
+            doc.internal.pageSize.height - 10
         );
       },
     });

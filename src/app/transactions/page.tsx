@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -47,6 +46,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { ImportTransactionsDialog } from '@/components/transactions/import-transactions-dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DeleteMultipleTransactionsDialog } from '@/components/transactions/delete-multiple-transactions-dialog';
+import { BulkEditCategoryDialog } from '@/components/transactions/bulk-edit-category-dialog';
 
 
 export interface Transaction {
@@ -76,6 +76,7 @@ export default function TransactionsPage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleteMultipleDialogOpen, setIsDeleteMultipleDialogOpen] = useState(false);
+  const [isBulkEditDialogOpen, setIsBulkEditDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<WithId<Transaction> | null>(null);
 
@@ -305,6 +306,10 @@ export default function TransactionsPage() {
                     </div>
                     {isSelectionMode ? (
                         <>
+                            <Button variant="outline" size="sm" onClick={() => setIsBulkEditDialogOpen(true)} disabled={selectedIds.size === 0}>
+                                <Pencil/>
+                                Edit Category ({selectedIds.size})
+                            </Button>
                             <Button variant="destructive" size="sm" onClick={() => setIsDeleteMultipleDialogOpen(true)} disabled={selectedIds.size === 0}>
                                 <Trash2/>
                                 Delete ({selectedIds.size})
@@ -317,7 +322,7 @@ export default function TransactionsPage() {
                         <>
                             <Button variant="outline" size="sm" onClick={toggleSelectionMode}>
                                 <Pencil/>
-                                Edit
+                                Select to Edit
                             </Button>
                             <Button size="sm" onClick={() => setIsAddDialogOpen(true)}>
                                 <PlusCircle />
@@ -526,6 +531,16 @@ export default function TransactionsPage() {
       <ImportTransactionsDialog 
         isOpen={isImportDialogOpen}
         setIsOpen={setIsImportDialogOpen}
+      />
+      <BulkEditCategoryDialog
+        isOpen={isBulkEditDialogOpen}
+        setIsOpen={setIsBulkEditDialogOpen}
+        transactions={selectedTransactions}
+        availableCategories={availableCategories}
+        onConfirm={() => {
+            setIsSelectionMode(false);
+            setSelectedIds(new Set());
+        }}
       />
     </div>
   );

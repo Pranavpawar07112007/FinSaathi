@@ -7,7 +7,6 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { PageTransition } from '@/components/page-transition';
 import { AppLayout } from '@/components/app-layout';
 import Script from 'next/script';
-import { AppLoader } from '@/components/app-loader';
 
 
 export const metadata: Metadata = {
@@ -58,7 +57,6 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <AppLoader>
             <FirebaseClientProvider>
               <AppLayout>
                 <main className="flex-1 overflow-x-hidden">
@@ -67,7 +65,6 @@ export default function RootLayout({
               </AppLayout>
               <Toaster />
             </FirebaseClientProvider>
-          </AppLoader>
         </ThemeProvider>
       </body>
     </html>

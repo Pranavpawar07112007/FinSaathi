@@ -85,13 +85,19 @@ export function useCollection<T = any>(
         setIsLoading(false);
       },
       (error: FirestoreError) => {
-        // Set the original Firestore error, not the custom one.
-        setError(error);
+        // Create the rich, contextual error.
+        const permissionError = new FirestorePermissionError({
+          path: (memoizedTargetRefOrQuery as InternalQuery)._query.path.canonicalString(),
+          operation: 'list',
+        });
+
+        // Set the local error state for UI feedback.
+        setError(permissionError);
         setData(null);
         setIsLoading(false);
 
-        // We can still emit the original error if other parts of the app need to react to it.
-        // errorEmitter.emit('permission-error', error);
+        // Emit the specialized error for the global listener.
+        errorEmitter.emit('permission-error', permissionError);
       }
     );
 

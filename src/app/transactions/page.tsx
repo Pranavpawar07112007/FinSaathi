@@ -47,7 +47,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { ImportTransactionsDialog } from '@/components/transactions/import-transactions-dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DeleteMultipleTransactionsDialog } from '@/components/transactions/delete-multiple-transactions-dialog';
-import { AnimatedSection } from '@/components/animated-section';
 
 
 export interface Transaction {
@@ -273,7 +272,6 @@ export default function TransactionsPage() {
   return (
     <div className="flex min-h-screen w-full flex-col">
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
-        <AnimatedSection>
             <Card>
             <CardHeader>
                 <div className="space-y-1.5">
@@ -497,7 +495,6 @@ export default function TransactionsPage() {
                 </Table>
             </CardContent>
             </Card>
-        </AnimatedSection>
       </main>
       <AddTransactionDialog
         isOpen={isAddDialogOpen}
@@ -533,3 +530,5 @@ export default function TransactionsPage() {
     </div>
   );
 }
+
+    

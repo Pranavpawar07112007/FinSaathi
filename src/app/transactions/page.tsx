@@ -49,6 +49,8 @@ import { DeleteMultipleTransactionsDialog } from '@/components/transactions/dele
 import { BulkEditCategoryDialog } from '@/components/transactions/bulk-edit-category-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { BulkAssignGoalDialog } from '@/components/transactions/bulk-assign-goal-dialog';
+import { CreateRuleDialog } from '@/components/transactions/create-rule-dialog';
+import { ToastAction } from '@/components/ui/toast';
 
 
 export interface Transaction {
@@ -89,6 +91,8 @@ export default function TransactionsPage() {
   const [isBulkEditDialogOpen, setIsBulkEditDialogOpen] = useState(false);
   const [isAssignGoalOpen, setIsAssignGoalOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [isCreateRuleDialogOpen, setIsCreateRuleDialogOpen] = useState(false);
+  const [ruleContext, setRuleContext] = useState<{ transactions: WithId<Transaction>[], category: string } | null>(null);
   const [selectedTransaction, setSelectedTransaction] = useState<WithId<Transaction> | null>(null);
   const [isMarkingTax, setIsMarkingTax] = useState(false);
   const { toast } = useToast();
@@ -625,10 +629,28 @@ export default function TransactionsPage() {
         setIsOpen={setIsBulkEditDialogOpen}
         transactions={selectedTransactions}
         availableCategories={availableCategories}
-        onConfirm={() => {
-            setIsSelectionMode(false);
-            setSelectedIds(new Set());
+        onConfirm={(newCategory) => {
+          toast({
+            title: 'Transactions Updated',
+            description: `${selectedTransactions.length} transaction(s) were categorized as "${newCategory}".`,
+            action: (
+              <ToastAction altText="Create a rule for this category" onClick={() => {
+                setRuleContext({ transactions: selectedTransactions, category: newCategory });
+                setIsCreateRuleDialogOpen(true);
+              }}>
+                Create Rule
+              </ToastAction>
+            ),
+          });
+          setIsSelectionMode(false);
+          setSelectedIds(new Set());
         }}
+      />
+      <CreateRuleDialog
+        isOpen={isCreateRuleDialogOpen}
+        setIsOpen={setIsCreateRuleDialogOpen}
+        transactions={ruleContext?.transactions || []}
+        newCategory={ruleContext?.category || ''}
       />
     </div>
   );

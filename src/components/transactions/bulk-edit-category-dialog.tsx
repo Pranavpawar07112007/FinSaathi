@@ -19,7 +19,6 @@ import { useUser, useFirestore } from '@/firebase';
 import { doc, writeBatch } from 'firebase/firestore';
 import type { WithId } from '@/firebase/firestore/use-collection';
 import type { Transaction } from '@/app/transactions/page';
-import { useToast } from '@/hooks/use-toast';
 import { learnFromCategorization } from '@/ai/flows/learn-from-categorization-flow';
 import {
   Popover,
@@ -48,7 +47,7 @@ interface BulkEditCategoryDialogProps {
   setIsOpen: (isOpen: boolean) => void;
   transactions: WithId<Transaction>[];
   availableCategories: string[];
-  onConfirm: () => void;
+  onConfirm: (newCategory: string) => void;
 }
 
 export function BulkEditCategoryDialog({
@@ -72,7 +71,6 @@ export function BulkEditCategoryDialog({
   const [formError, setFormError] = useState<string | null>(null);
   const { user } = useUser();
   const firestore = useFirestore();
-  const { toast } = useToast();
 
   const [isCreatingNewCategory, setIsCreatingNewCategory] = useState(false);
   const [popoverOpen, setPopoverOpen] = useState(false);
@@ -98,7 +96,7 @@ export function BulkEditCategoryDialog({
         const transactionRef = doc(firestore, 'users', user.uid, 'transactions', transaction.id);
         batch.update(transactionRef, { category: newCategory });
 
-        // Teach the AI in the background
+        // Teach the AI in the background for fuzzy matching
         learnFromCategorization({
           userId: user.uid,
           description: transaction.description,
@@ -108,13 +106,8 @@ export function BulkEditCategoryDialog({
 
       await batch.commit();
 
-      toast({
-        title: 'Transactions Updated',
-        description: `${transactions.length} transaction(s) have been moved to the "${newCategory}" category.`,
-      });
-
-      onConfirm();
-      setIsOpen(false);
+      onConfirm(newCategory);
+      handleOpenChange(false);
 
     } catch (error) {
       setFormError('Failed to update transactions. Please try again.');

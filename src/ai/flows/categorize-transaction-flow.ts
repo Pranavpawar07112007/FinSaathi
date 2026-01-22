@@ -11,12 +11,18 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { getFirebaseApp } from '@/firebase/server-app';
 
-const { firestore } = getFirebaseApp();
+// --- Type Definitions ---
+interface UserCategoryPreference {
+  description: string;
+  category: string;
+}
 
-const UserPreferenceSchema = z.object({
-  description: z.string(),
-  category: z.string(),
-});
+interface CategorizationRule {
+  keyword: string;
+  category: string;
+}
+
+const { firestore } = getFirebaseApp();
 
 const CategorizeTransactionInputSchema = z.object({
   description: z.string().describe('The description of the transaction.'),
@@ -40,6 +46,7 @@ const CategorizeTransactionOutputSchema = z.object({
       'Investment',
       'Savings',
       'Other',
+      'Transfer',
     ])
     .describe(
       'The category of the transaction. Must be one of the specified enum values.'
@@ -49,29 +56,62 @@ export type CategorizeTransactionOutput = z.infer<
   typeof CategorizeTransactionOutputSchema
 >;
 
-async function getUserPreferences(userId: string): Promise<z.infer<typeof UserPreferenceSchema>[]> {
+// --- Helper Functions to Fetch Data ---
+
+async function getUserPreferences(userId: string): Promise<UserCategoryPreference[]> {
     try {
         const snapshot = await firestore.collection(`users/${userId}/userCategoryPreferences`).limit(50).get();
-        if (snapshot.empty) {
-            return [];
-        }
-        return snapshot.docs.map(doc => doc.data() as z.infer<typeof UserPreferenceSchema>);
+        if (snapshot.empty) return [];
+        return snapshot.docs.map(doc => doc.data() as UserCategoryPreference);
     } catch (error) {
         console.error("Error fetching user preferences:", error);
-        return []; // Return empty array on error
+        return [];
     }
 }
 
+async function getUserRules(userId: string): Promise<CategorizationRule[]> {
+    try {
+        const snapshot = await firestore.collection(`users/${userId}/categorizationRules`).get();
+        if (snapshot.empty) return [];
+        return snapshot.docs.map(doc => doc.data() as CategorizationRule);
+    } catch (error) {
+        console.error("Error fetching user rules:", error);
+        return [];
+    }
+}
 
+/**
+ * Main function to categorize a transaction.
+ * It first checks for user-defined rules and applies them if a match is found.
+ * If no rules match, it falls back to an AI-based categorization flow.
+ */
 export async function categorizeTransaction(
   input: CategorizeTransactionInput
 ): Promise<CategorizeTransactionOutput> {
-  return categorizeTransactionFlow(input);
+  
+  const { description, userId } = input;
+  
+  // 1. Check for hard-coded rules first
+  const userRules = await getUserRules(userId);
+  const lowerCaseDescription = description.toLowerCase();
+  
+  for (const rule of userRules) {
+    if (lowerCaseDescription.includes(rule.keyword.toLowerCase())) {
+        return { category: rule.category as CategorizeTransactionOutput['category'] };
+    }
+  }
+
+  // 2. If no rule matches, proceed to the AI flow
+  return categorizeTransactionAIFlow({ description, userId });
 }
 
-const categorizeTransactionFlow = ai.defineFlow(
+/**
+ * AI-driven categorization flow that uses past user preferences for context.
+ * This is used as a fallback when no specific rule matches.
+ */
+const categorizeTransactionAIFlow = ai.defineFlow(
   {
-    name: 'categorizeTransactionFlow',
+    name: 'categorizeTransactionAIFlow',
     inputSchema: CategorizeTransactionInputSchema,
     outputSchema: CategorizeTransactionOutputSchema,
   },
@@ -87,7 +127,7 @@ const categorizeTransactionFlow = ai.defineFlow(
         User's Past Preferences (Description -> Category):
         ${userPreferences.map(p => `- "${p.description}" -> "${p.category}"`).join('\n') || 'No preferences yet.'}
         
-        Based on these preferences, assign the following transaction to one of these categories: Groceries, Transport, Entertainment, Housing, Salary, Utilities, Health, Shopping, Investment, Savings, Other.
+        Based on these preferences, assign the following transaction to one of these categories: Groceries, Transport, Entertainment, Housing, Salary, Utilities, Health, Shopping, Investment, Savings, Other, Transfer.
         
         New Transaction Description: "${description}"`,
         model: 'googleai/gemini-2.5-flash',

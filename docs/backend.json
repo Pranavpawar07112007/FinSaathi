@@ -286,6 +286,20 @@
         "lastUsed": { "type": "string", "format": "date-time", "description": "The last time this preference was used or confirmed." }
       },
       "required": ["id", "userId", "description", "category", "lastUsed"]
+    },
+    "CategorizationRule": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "CategorizationRule",
+      "type": "object",
+      "description": "Stores a user-defined rule for automatically categorizing transactions based on a keyword.",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the rule." },
+        "userId": { "type": "string", "description": "The ID of the user who owns this rule." },
+        "keyword": { "type": "string", "description": "The keyword to match in the transaction description (case-insensitive)." },
+        "category": { "type": "string", "description": "The category to assign if the keyword is found." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "The date and time the rule was created." }
+      },
+      "required": ["id", "userId", "keyword", "category", "createdAt"]
     }
   },
   "auth": {
@@ -419,6 +433,14 @@
           "entityName": "UserCategoryPreference",
           "schema": { "$ref": "#/backend/entities/UserCategoryPreference" },
           "description": "Stores a user's learned preference for categorizing a transaction description. Access is restricted to the owning user."
+        }
+      },
+      {
+        "path": "/users/{userId}/categorizationRules/{ruleId}",
+        "definition": {
+          "entityName": "CategorizationRule",
+          "schema": { "$ref": "#/backend/entities/CategorizationRule" },
+          "description": "Stores user-defined rules for auto-categorization. Access is restricted to the owning user."
         }
       }
     ],

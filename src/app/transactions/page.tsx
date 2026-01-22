@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Trash2, Pencil, FilterX, FileDown, HelpCircle, ShieldCheck, ArrowRightLeft, Upload } from 'lucide-react';
+import { PlusCircle, Trash2, Pencil, FilterX, FileDown, HelpCircle, ShieldCheck, ArrowRightLeft, Upload, Loader2 } from 'lucide-react';
 import { AddTransactionDialog } from '@/components/transactions/add-transaction-dialog';
 import {
   useCollection,
@@ -19,7 +19,7 @@ import {
   useMemoFirebase,
   useUser,
 } from '@/firebase';
-import { collection, query, orderBy } from 'firebase/firestore';
+import { collection, query, orderBy, writeBatch, doc } from 'firebase/firestore';
 import {
   Card,
   CardContent,
@@ -47,6 +47,7 @@ import { ImportTransactionsDialog } from '@/components/transactions/import-trans
 import { Checkbox } from '@/components/ui/checkbox';
 import { DeleteMultipleTransactionsDialog } from '@/components/transactions/delete-multiple-transactions-dialog';
 import { BulkEditCategoryDialog } from '@/components/transactions/bulk-edit-category-dialog';
+import { useToast } from '@/hooks/use-toast';
 
 
 export interface Transaction {
@@ -79,6 +80,8 @@ export default function TransactionsPage() {
   const [isBulkEditDialogOpen, setIsBulkEditDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<WithId<Transaction> | null>(null);
+  const [isMarkingTax, setIsMarkingTax] = useState(false);
+  const { toast } = useToast();
 
   // State for bulk selection
   const [isSelectionMode, setIsSelectionMode] = useState(false);
@@ -203,6 +206,41 @@ export default function TransactionsPage() {
     setSelectedIds(newSelectedIds);
   };
 
+  const handleBulkMarkForTax = async () => {
+    if (!user || !firestore || selectedIds.size === 0) return;
+
+    setIsMarkingTax(true);
+    try {
+        const batch = writeBatch(firestore);
+        
+        selectedIds.forEach(id => {
+            const transactionRef = doc(firestore, 'users', user.uid, 'transactions', id);
+            batch.update(transactionRef, { isTaxDeductible: true });
+        });
+
+        await batch.commit();
+
+        toast({
+            title: 'Transactions Updated',
+            description: `${selectedIds.size} transaction(s) marked as potentially tax-deductible.`,
+        });
+
+        // Reset selection
+        setIsSelectionMode(false);
+        setSelectedIds(new Set());
+
+    } catch (error) {
+        console.error("Error bulk marking for tax:", error);
+        toast({
+            variant: 'destructive',
+            title: 'Update Failed',
+            description: 'Could not mark transactions for tax. Please try again.',
+        });
+    } finally {
+        setIsMarkingTax(false);
+    }
+  };
+
   const renderTransactionDetails = (t: WithId<Transaction>) => {
     if (t.type === 'transfer' && t.fromAccountId && t.toAccountId) {
       return (
@@ -309,6 +347,10 @@ export default function TransactionsPage() {
                             <Button variant="outline" size="sm" onClick={() => setIsBulkEditDialogOpen(true)} disabled={selectedIds.size === 0}>
                                 <Pencil/>
                                 Edit Category ({selectedIds.size})
+                            </Button>
+                            <Button variant="outline" size="sm" onClick={handleBulkMarkForTax} disabled={selectedIds.size === 0 || isMarkingTax}>
+                                {isMarkingTax ? <Loader2 className="mr-2 animate-spin" /> : <ShieldCheck />}
+                                Mark for Tax ({selectedIds.size})
                             </Button>
                             <Button variant="destructive" size="sm" onClick={() => setIsDeleteMultipleDialogOpen(true)} disabled={selectedIds.size === 0}>
                                 <Trash2/>

@@ -432,7 +432,11 @@ export default function TransactionsPage() {
     doc.text('Net Flow', 20 + (cardWidth + cardGap) * 2, summaryY + 8);
     doc.setFontSize(16);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(netFlow >= 0 ? [39, 174, 96] : [231, 76, 60]); // Green or Red
+    if (netFlow >= 0) {
+      doc.setTextColor(39, 174, 96); // Green
+    } else {
+      doc.setTextColor(231, 76, 60); // Red
+    }
     doc.text(formatCurrency(netFlow), 20 + (cardWidth + cardGap) * 2, summaryY + 17);
     
     // --- Transactions Table ---
@@ -822,3 +826,5 @@ export default function TransactionsPage() {
     </div>
   );
 }
+
+    

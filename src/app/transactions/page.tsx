@@ -1,6 +1,9 @@
+
 'use client';
 
 import { useState, useMemo } from 'react';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import {
   Table,
   TableBody,
@@ -11,7 +14,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Trash2, Pencil, FilterX, FileDown, HelpCircle, ShieldCheck, ArrowRightLeft, Upload, Loader2, Target } from 'lucide-react';
+import { PlusCircle, Trash2, Pencil, FilterX, FileDown, HelpCircle, ShieldCheck, ArrowRightLeft, Upload, Loader2, Target, FileText } from 'lucide-react';
 import { AddTransactionDialog } from '@/components/transactions/add-transaction-dialog';
 import {
   useCollection,
@@ -343,6 +346,103 @@ export default function TransactionsPage() {
     link.click();
     document.body.removeChild(link);
   };
+  
+  const downloadPDF = () => {
+    if (filteredTransactions.length === 0) {
+      toast({
+        variant: 'destructive',
+        title: 'No Transactions',
+        description: 'There are no transactions to download in the current view.',
+      });
+      return;
+    }
+
+    const doc = new jsPDF();
+    const userEmail = user?.email || 'User';
+
+    const formatCurrency = (amount: number) => {
+      return amount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' });
+    };
+
+    // Header
+    doc.setFontSize(20);
+    doc.setTextColor(40);
+    doc.text('Transaction Report', 14, 22);
+    doc.setFontSize(11);
+    doc.setTextColor(100);
+    doc.text(`Account: ${userEmail}`, 14, 30);
+    doc.text(`Date Generated: ${new Date().toLocaleDateString()}`, 14, 36);
+
+    // Summary
+    const totalIncome = filteredTransactions
+      .filter((t) => t.type === 'income')
+      .reduce((acc, t) => acc + t.amount, 0);
+    const totalExpense = filteredTransactions
+      .filter((t) => t.type === 'expense')
+      .reduce((acc, t) => acc + Math.abs(t.amount), 0);
+    const netFlow = totalIncome - totalExpense;
+
+    let summaryY = 50;
+    doc.setFontSize(12);
+    doc.text('Summary for Filtered Period', 14, summaryY);
+    summaryY += 7;
+    doc.setFontSize(10);
+    doc.text(`Total Transactions: ${filteredTransactions.length}`, 14, summaryY);
+    summaryY += 7;
+    doc.text(`Total Income: ${formatCurrency(totalIncome)}`, 14, summaryY);
+    summaryY += 7;
+    doc.text(`Total Expense: ${formatCurrency(totalExpense)}`, 14, summaryY);
+    summaryY += 7;
+    doc.setLineWidth(0.2);
+    doc.line(14, summaryY - 3, 70, summaryY - 3);
+    doc.text(`Net Flow: ${formatCurrency(netFlow)}`, 14, summaryY);
+
+    // Table
+    const tableData = filteredTransactions.map((t) => {
+      const amountStr = formatCurrency(t.amount);
+      return [
+        t.date,
+        t.description,
+        t.category,
+        {
+          content: amountStr,
+          styles: {
+            halign: 'right',
+            textColor: t.amount < 0 ? [220, 53, 69] : [25, 135, 84],
+          },
+        },
+      ];
+    });
+
+    autoTable(doc, {
+      startY: summaryY + 10,
+      head: [['Date', 'Description', 'Category', 'Amount']],
+      body: tableData,
+      theme: 'striped',
+      headStyles: {
+        fillColor: [41, 128, 185],
+        textColor: 255,
+        fontStyle: 'bold',
+      },
+      alternateRowStyles: {
+        fillColor: [245, 245, 245],
+      },
+      didDrawPage: function (data) {
+        // Footer
+        const pageCount = doc.internal.getNumberOfPages();
+        doc.setFontSize(10);
+        doc.setTextColor(150);
+        doc.text(
+          `Page ${data.pageNumber} of ${pageCount}`,
+          data.settings.margin.left,
+          doc.internal.pageSize.height - 10
+        );
+      },
+    });
+
+    doc.save('Finsaathi_Transactions.pdf');
+  };
+
 
   return (
     <div className="flex min-h-screen w-full flex-col">
@@ -365,6 +465,10 @@ export default function TransactionsPage() {
                             <FileDown />
                             Download as CSV
                         </Button>
+                         <Button variant="outline" size="sm" onClick={downloadPDF}>
+                            <FileText />
+                            Download as PDF
+                        </Button>
                         <Popover>
                             <PopoverTrigger asChild>
                                 <Button variant="ghost" size="icon" className="h-9 w-9">
@@ -373,7 +477,7 @@ export default function TransactionsPage() {
                             </PopoverTrigger>
                             <PopoverContent className="w-80">
                                 <p className="text-sm">
-                                    The CSV file will contain only the transactions that match the currently active filters (Year, Month, Category, and Type).
+                                    Downloaded files will contain only the transactions that match the currently active filters.
                                 </p>
                             </PopoverContent>
                         </Popover>
